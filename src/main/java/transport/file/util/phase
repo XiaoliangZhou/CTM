@@ -1,0 +1,167 @@
+public static void main(String[] args){
+
+        List l  = new ArrayList();
+        ctm_intersection cint3 =  new ctm_intersection(
+                "3",
+                Arrays.asList(new String[]{"2","S"},new String[]{"8","W"},new String[]{"35","N"}),
+                Arrays.asList(new String[]{"5","N"},new String[]{"6","E"},new String[]{"7","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint4 =  new ctm_intersection(
+                "4",
+                Arrays.asList(new String[]{"6","E"},new String[]{"11","W"},new String[]{"31","N"}),
+                Arrays.asList(new String[]{"8","W"},new String[]{"9","E"},new String[]{"10","S"}) ,
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint5 =  new ctm_intersection(
+                "5",
+                Arrays.asList(new String[]{"9","E"},new String[]{"15","W"},new String[]{"23","N"}) ,
+                Arrays.asList(new String[]{"11","W"},new String[]{"12","E"},new String[]{"13","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint6 =  new ctm_intersection(
+                "6",Arrays.asList(new String[]{"4","S"},new String[]{"12","E"},new String[]{"19","N"}),
+                Arrays.asList(new String[]{"14","N"},new String[]{"15","W"},new String[]{"16","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint8 =  new ctm_intersection(
+                "8",
+                Arrays.asList(new String[]{"16","S"},new String[]{"17","W"},new String[]{"24","E"}, new String[]{"47","N"}),
+                Arrays.asList(new String[]{"19","N"},new String[]{"20","E"},
+                        new String[]{"21","W"},new String[]{"22","S"}) ,
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint9 =  new ctm_intersection(
+                "9",
+                Arrays.asList(new String[]{"13","S"},new String[]{"21","E"},new String[]{"26","N"}) ,
+                Arrays.asList(new String[]{"23","N"},new String[]{"24","E"},new String[]{"25","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint10 = new ctm_intersection(
+                "10",
+                Arrays.asList(new String[]{"25","S"},new String[]{"32","E"},new String[]{"43","N"},new String[]{"48","W"}),
+                Arrays.asList(new String[]{"26","N"},new String[]{"27","W"},new String[]{"28","S"},new String[]{"29","E"}),
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint11 = new ctm_intersection(
+                "11",
+                Arrays.asList(new String[]{"10","S"},new String[]{"27","W"},new String[]{"36","E"},new String[]{"40","N"}),
+                Arrays.asList(new String[]{"31","N"},new String[]{"32","E"},new String[]{"33","W"},new String[]{"34","S"}),
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint12 = new ctm_intersection(
+                "12",
+                Arrays.asList(new String[]{"7","S"},new String[]{"33","W"},new String[]{"38","N"}),
+                Arrays.asList(new String[]{"35","N"},new String[]{"36","E"},new String[]{"37","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint14 = new ctm_intersection(
+                "14",
+                Arrays.asList(new String[]{"34","S"},new String[]{"44","W"},new String[]{"71","N"}),
+                Arrays.asList(new String[]{"40","N"},new String[]{"41","E"},new String[]{"42","S"}), new int[]{},
+                0,
+                3);
+        ctm_intersection cint15 = new ctm_intersection(
+                "15",
+                Arrays.asList(new String[]{"28","S"},new String[]{"41","E"},new String[]{"57","W"},new String[]{"67","N"}),
+                Arrays.asList(new String[]{"43","N"},new String[]{"44","W"},new String[]{"45","E"},new String[]{"46","S"}),
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint16 = new ctm_intersection(
+                "16",
+                Arrays.asList(new String[]{"22","S"},new String[]{"29","E"},new String[]{"52","N"},new String[]{"55","W"}),
+                Arrays.asList(new String[]{"47","N"},new String[]{"48","W"},new String[]{"49","S"},new String[]{"50","E"}),
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint17 = new ctm_intersection(
+                "17",
+                Arrays.asList(new String[]{"30","E"},new String[]{"49","S"},new String[]{"58","N"}),
+                Arrays.asList(new String[]{"51","W"},new String[]{"52","N"},new String[]{"53","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint18 = new ctm_intersection(
+                "18",
+                Arrays.asList(new String[]{"18","S"},new String[]{"50","E"},new String[]{"60","N"}),
+                Arrays.asList(new String[]{"54","N"},new String[]{"55","W"},new String[]{"56","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint19 = new ctm_intersection(
+                "19",
+                Arrays.asList(new String[]{"45","E"},new String[]{"53","S"},new String[]{"61","N"}),
+                Arrays.asList(new String[]{"57","W"},new String[]{"58","N"},new String[]{"59","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint20 = new ctm_intersection(
+                "20",
+                Arrays.asList(new String[]{"56","W"},new String[]{"59","S"},new String[]{"64","N"},new String[]{"68","E"}),
+                Arrays.asList(new String[]{"60","E"},new String[]{"61","N"},new String[]{"62","S"},new String[]{"63","W"}),
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint21 = new ctm_intersection(
+                "21",
+                Arrays.asList(new String[]{"62","W"},new String[]{"69","S"},new String[]{"75","E"}),
+                Arrays.asList(new String[]{"64","E"},new String[]{"65","N"},new String[]{"66","W"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint22 = new ctm_intersection(
+                "22",
+                Arrays.asList(new String[]{"46","S"},new String[]{"63","W"},new String[]{"65","N"},new String[]{"72","E"}),
+                Arrays.asList(new String[]{"67","N"},new String[]{"68","E"},new String[]{"69","S"},new String[]{"70","W"}),
+                new int[]{},
+                0,
+                4);
+        ctm_intersection cint23 = new ctm_intersection(
+                "23",
+                Arrays.asList(new String[]{"42","S"},new String[]{"70","W"},new String[]{"76","N"}),
+                Arrays.asList(new String[]{"71","N"},new String[]{"72","E"},new String[]{"73","S"}),
+                new int[]{},
+                0,
+                3);
+        ctm_intersection cint24 = new ctm_intersection(
+                "24",
+                Arrays.asList(new String[]{"39","E"},new String[]{"66","W"},new String[]{"73","S"}),
+                Arrays.asList(new String[]{"74","W"},new String[]{"75","E"},new String[]{"76","N"}),
+                new int[]{},
+                0,
+                3);
+        l.add(cint3);
+        l.add(cint4);
+        l.add(cint5);
+        l.add(cint6);
+        l.add(cint8);
+        l.add(cint9);
+        l.add(cint10);
+        l.add(cint11);
+        l.add(cint12);
+        l.add(cint14);
+        l.add(cint15);
+        l.add(cint16);
+        l.add(cint17);
+        l.add(cint18);
+        l.add(cint19);
+        l.add(cint20);
+        l.add(cint21);
+        l.add(cint22);
+        l.add(cint23);
+        l.add(cint24);
+        Gson gson = new Gson();
+        System.out.println(gson.toJson(l));
+
+
+    }

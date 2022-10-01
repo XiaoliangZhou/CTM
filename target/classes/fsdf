@@ -1,0 +1,1959 @@
+public void initGUI(){
+        p1=new JPanel();
+        btn1=new JButton("运行");
+        btn2=new JButton("暂停");
+        btns=new JButton[row][col];
+        labels=new JLabel[row][col];
+        p1.add(btn1);
+        p1.add(btn2);
+
+        p=new JPanel();
+        p.setLayout(new BorderLayout());
+        contentPane.add(p);
+        p.add(p1,BorderLayout.CENTER);
+
+        p2=new JPanel();
+        p2.setLayout(new GridLayout(row,col,0,0));
+        p2.setBackground(Color.white);
+        p2.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+        btn1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(thread1==null&thread2==null) {
+                    thread1 = new Thread(new gui.RunThread1());
+                    thread1.start();
+                }else if(thread2!=null){
+                    synchronized(thread2) {
+                        thread2.notify();
+                    }
+                    suspended2 = false;
+                }
+            }
+        });
+        btn2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                suspended2 = true;
+                savePic(p2,step);
+            }
+        });
+
+        for(int i=0;i<row;i++) {
+            for (int j = 0; j < col; j++) {
+              /*  labels[i][j] = new JLabel();
+                labels[i][j].setOpaque(true);
+                labels[i][j].setBackground(Color.white);
+                labels[i][j].setBorder(BorderFactory.createLineBorder(Color.darkGray));*/
+
+                btns[i][j]=new JButton(i+","+j);
+                btns[i][j].setMargin(new Insets(0,0,0,0));
+                btns[i][j].setBackground(Color.black);
+                btns[i][j].addMouseListener(new NormoreMouseEvent());
+                //p2.add(btns[i][j]);
+                p2.add(btns[i][j]);
+            }
+        }
+        for(int i=14;i<29;i++) {
+            for (int j=2;j<12; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=14;i<29;i++) {
+            for (int j=14;j<19; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=31;i<36;i++) {
+            for (int j=14;j<19; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=38;i<43;i++) {
+            for (int j=14;j<19; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=45;i<50;i++) {
+            for (int j=14;j<19; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=31;i<50;i++) {
+            for (int j=2;j<12; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=2;i<12;i++) {
+            for (int j=2;j<28; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=2;i<12;i++) {
+            for (int j=30;j<37; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=14;i<22;i++) {
+            for (int j=30;j<37; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=24;i<29;i++) {
+            for (int j=30;j<37; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=31;i<43;i++) {
+            for (int j=30;j<37; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=43;i<50;i++) {
+            for (int j=30;j<37; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        /*25/26列*/
+        for(int i=14;i<22;i++) {
+            for (int j=21;j<28; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+        for(int i=24;i<29;i++) {
+            for (int j=21;j<28; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=31;i<36;i++) {
+            for (int j=21;j<28; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=38;i<43;i++) {
+            for (int j=21;j<28; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=45;i<50;i++) {
+            for (int j=21;j<28; j++) {
+                btns[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=0;i<2;i++) {
+            for (int j=0;j<2; j++) {
+                JLabel label01 = new JLabel();
+                label01.setText("1");
+            }
+        }
+
+        btns[0][0].setVisible(false);
+        btns[0][1].setVisible(false);
+        btns[1][0].setVisible(false);
+        btns[1][1].setVisible(false);
+
+        btns[12][0].setVisible(false);
+        btns[12][1].setVisible(false);
+        btns[13][0].setVisible(false);
+        btns[13][1].setVisible(false);
+
+        btns[29][0].setVisible(false);
+        btns[29][1].setVisible(false);
+        btns[30][0].setVisible(false);
+        btns[30][1].setVisible(false);
+
+        btns[50][0].setVisible(false);
+        btns[50][1].setVisible(false);
+        btns[51][0].setVisible(false);
+        btns[51][1].setVisible(false);
+
+        btns[12][12].setVisible(false);
+        btns[12][13].setVisible(false);
+        btns[13][12].setVisible(false);
+        btns[13][13].setVisible(false);
+
+        btns[29][12].setVisible(false);
+        btns[29][13].setVisible(false);
+        btns[30][12].setVisible(false);
+        btns[30][13].setVisible(false);
+
+        btns[43][12].setVisible(false);
+        btns[43][13].setVisible(false);
+        btns[44][12].setVisible(false);
+        btns[44][13].setVisible(false);
+
+        btns[36][12].setVisible(false);
+        btns[36][13].setVisible(false);
+        btns[37][12].setVisible(false);
+        btns[37][13].setVisible(false);
+
+        btns[50][12].setVisible(false);
+        btns[50][13].setVisible(false);
+        btns[51][12].setVisible(false);
+        btns[51][13].setVisible(false);
+
+        btns[12][19].setVisible(false);
+        btns[12][20].setVisible(false);
+        btns[13][19].setVisible(false);
+        btns[13][20].setVisible(false);
+
+        btns[22][19].setVisible(false);
+        btns[23][19].setVisible(false);
+        btns[22][20].setVisible(false);
+        btns[23][20].setVisible(false);
+
+        btns[29][19].setVisible(false);
+        btns[29][20].setVisible(false);
+        btns[30][19].setVisible(false);
+        btns[30][20].setVisible(false);
+
+        btns[36][19].setVisible(false);
+        btns[36][20].setVisible(false);
+        btns[37][19].setVisible(false);
+        btns[37][20].setVisible(false);
+
+        btns[43][19].setVisible(false);
+        btns[43][20].setVisible(false);
+        btns[44][19].setVisible(false);
+        btns[44][20].setVisible(false);
+
+        btns[50][19].setVisible(false);
+        btns[50][20].setVisible(false);
+        btns[51][19].setVisible(false);
+        btns[51][20].setVisible(false);
+
+
+        btns[0][28].setVisible(false);
+        btns[0][29].setVisible(false);
+        btns[1][28].setVisible(false);
+        btns[1][29].setVisible(false);
+
+        btns[12][28].setVisible(false);
+        btns[12][29].setVisible(false);
+        btns[13][28].setVisible(false);
+        btns[13][29].setVisible(false);
+
+        btns[22][28].setVisible(false);
+        btns[22][29].setVisible(false);
+        btns[23][28].setVisible(false);
+        btns[23][29].setVisible(false);
+
+        btns[29][28].setVisible(false);
+        btns[29][29].setVisible(false);
+        btns[30][28].setVisible(false);
+        btns[30][29].setVisible(false);
+
+        btns[36][28].setVisible(false);
+        btns[36][29].setVisible(false);
+        btns[37][28].setVisible(false);
+        btns[37][29].setVisible(false);
+
+        btns[43][28].setVisible(false);
+        btns[43][29].setVisible(false);
+        btns[44][28].setVisible(false);
+        btns[44][29].setVisible(false);
+
+        btns[50][28].setVisible(false);
+        btns[50][29].setVisible(false);
+        btns[51][28].setVisible(false);
+        btns[51][29].setVisible(false);
+
+
+        btns[0][37].setVisible(false);
+        btns[0][38].setVisible(false);
+        btns[1][37].setVisible(false);
+        btns[1][38].setVisible(false);
+
+        btns[12][37].setVisible(false);
+        btns[12][38].setVisible(false);
+        btns[13][37].setVisible(false);
+        btns[13][38].setVisible(false);
+
+        btns[22][37].setVisible(false);
+        btns[22][38].setVisible(false);
+        btns[23][37].setVisible(false);
+        btns[23][38].setVisible(false);
+
+        btns[29][37].setVisible(false);
+        btns[29][38].setVisible(false);
+        btns[30][37].setVisible(false);
+        btns[30][38].setVisible(false);
+
+        btns[50][37].setVisible(false);
+        btns[50][38].setVisible(false);
+        btns[51][37].setVisible(false);
+        btns[51][38].setVisible(false);
+
+        contentPane.add(p,BorderLayout.NORTH);
+        contentPane.add(p2,BorderLayout.CENTER);
+
+    }
+    public void initGUI(){
+        p1=new JPanel();
+        btn1=new JButton("运行");
+        btn2=new JButton("暂停");
+        //labels=new JButton[row][col];
+        labels=new JLabel[row][col];
+        p1.add(btn1);
+        p1.add(btn2);
+
+        p=new JPanel();
+        p.setLayout(new BorderLayout());
+        contentPane.add(p);
+        p.add(p1,BorderLayout.CENTER);
+
+        p2=new JPanel();
+        p2.setLayout(new GridLayout(row,col,0,0));
+        p2.setBackground(Color.black);
+        p2.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY,2));
+
+        //p2.setBorder(BorderFactory.);
+
+        btn1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(thread1==null&thread2==null) {
+                    thread1 = new Thread(new gui.RunThread1());
+                    thread1.start();
+                }else if(thread2!=null){
+                    synchronized(thread2) {
+                        thread2.notify();
+                    }
+                    suspended2 = false;
+                }
+            }
+        });
+        btn2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                suspended2 = true;
+                savePic(p2,step);
+            }
+        });
+
+        for(int i=0;i<row;i++) {
+            for (int j = 0; j < col; j++) {
+                labels[i][j] = new JLabel();
+                labels[i][j].setOpaque(true);
+                labels[i][j].setBackground(Color.white);
+                labels[i][j].setBorder(BorderFactory.createLineBorder(Color.white));
+             /*  labels[i][j]=new JButton(i+","+j);
+               labels[i][j].setMargin(new Insets(0,0,0,0));
+               labels[i][j].setBackground(Color.black);
+               labels[i][j].addMouseListener(new NormoreMouseEvent());*/
+                p2.add(labels[i][j]);
+                //p2.addlabels[i][j]);
+            }
+        }
+       /* for(int i=14;i<29;i++) {
+            for (int j=2;j<12; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=14;i<29;i++) {
+            for (int j=14;j<19; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=31;i<36;i++) {
+            for (int j=14;j<19; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=38;i<43;i++) {
+            for (int j=14;j<19; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=45;i<50;i++) {
+            for (int j=14;j<19; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=31;i<50;i++) {
+            for (int j=2;j<12; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=2;i<12;i++) {
+            for (int j=2;j<28; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=2;i<12;i++) {
+            for (int j=30;j<37; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=14;i<22;i++) {
+            for (int j=30;j<37; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=24;i<29;i++) {
+            for (int j=30;j<37; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=31;i<43;i++) {
+            for (int j=30;j<37; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=43;i<50;i++) {
+            for (int j=30;j<37; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        *//*25/26列*//*
+        for(int i=14;i<22;i++) {
+            for (int j=21;j<28; j++) {labels[i][j].setVisible(false);
+            }
+        }
+        for(int i=24;i<29;i++) {
+            for (int j=21;j<28; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=31;i<36;i++) {
+            for (int j=21;j<28; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=38;i<43;i++) {
+            for (int j=21;j<28; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=45;i<50;i++) {
+            for (int j=21;j<28; j++) {labels[i][j].setVisible(false);
+            }
+        }
+
+        for(int i=0;i<2;i++) {
+            for (int j=0;j<2; j++) {
+                JLabel label01 = new JLabel();
+                label01.setText("1");
+            }
+        }
+        labels[0][0].setVisible(false);labels[0][1].setVisible(false);labels[1][0].setVisible(false);labels[1][1].setVisible(false);
+        labels[12][0].setVisible(false);labels[12][1].setVisible(false);labels[13][0].setVisible(false);labels[13][1].setVisible(false);
+        labels[29][0].setVisible(false);labels[29][1].setVisible(false);labels[30][0].setVisible(false);labels[30][1].setVisible(false);
+        labels[50][0].setVisible(false);labels[50][1].setVisible(false);labels[51][0].setVisible(false);labels[51][1].setVisible(false);
+        labels[12][12].setVisible(false);labels[12][13].setVisible(false);labels[13][12].setVisible(false);labels[13][13].setVisible(false);
+        labels[29][12].setVisible(false);labels[29][13].setVisible(false);labels[30][12].setVisible(false);labels[30][13].setVisible(false);
+        labels[43][12].setVisible(false);labels[43][13].setVisible(false);labels[44][12].setVisible(false);labels[44][13].setVisible(false);
+        labels[36][12].setVisible(false);labels[36][13].setVisible(false);labels[37][12].setVisible(false);labels[37][13].setVisible(false);
+        labels[50][12].setVisible(false);labels[50][13].setVisible(false);labels[51][12].setVisible(false);labels[51][13].setVisible(false);
+        labels[12][19].setVisible(false);labels[12][20].setVisible(false);labels[13][19].setVisible(false);labels[13][20].setVisible(false);
+        labels[22][19].setVisible(false);labels[23][19].setVisible(false);labels[22][20].setVisible(false);labels[23][20].setVisible(false);
+        labels[29][19].setVisible(false);labels[29][20].setVisible(false);labels[30][19].setVisible(false);labels[30][20].setVisible(false);
+        labels[36][19].setVisible(false);labels[36][20].setVisible(false);labels[37][19].setVisible(false);labels[37][20].setVisible(false);
+        labels[43][19].setVisible(false);labels[43][20].setVisible(false);labels[44][19].setVisible(false);labels[44][20].setVisible(false);
+        labels[50][19].setVisible(false);labels[50][20].setVisible(false);labels[51][19].setVisible(false);labels[51][20].setVisible(false);
+
+        labels[0][28].setVisible(false);labels[0][29].setVisible(false);labels[1][28].setVisible(false);labels[1][29].setVisible(false);
+        labels[12][28].setVisible(false);labels[12][29].setVisible(false);labels[13][28].setVisible(false);labels[13][29].setVisible(false);
+        labels[22][28].setVisible(false);labels[22][29].setVisible(false);labels[23][28].setVisible(false);labels[23][29].setVisible(false);
+        labels[29][28].setVisible(false);labels[29][29].setVisible(false);labels[30][28].setVisible(false);labels[30][29].setVisible(false);
+        labels[36][28].setVisible(false);labels[36][29].setVisible(false);labels[37][28].setVisible(false);labels[37][29].setVisible(false);
+        labels[43][28].setVisible(false);labels[43][29].setVisible(false);labels[44][28].setVisible(false);labels[44][29].setVisible(false);
+        labels[50][28].setVisible(false);labels[50][29].setVisible(false);labels[51][28].setVisible(false);labels[51][29].setVisible(false);
+
+        labels[0][37].setVisible(false);labels[0][38].setVisible(false);labels[1][37].setVisible(false);labels[1][38].setVisible(false);
+        labels[12][37].setVisible(false);labels[12][38].setVisible(false);labels[13][37].setVisible(false);labels[13][38].setVisible(false);
+        labels[22][37].setVisible(false);labels[22][38].setVisible(false);labels[23][37].setVisible(false);labels[23][38].setVisible(false);
+        labels[29][37].setVisible(false);labels[29][38].setVisible(false);labels[30][37].setVisible(false);labels[30][38].setVisible(false);
+        labels[50][37].setVisible(false);labels[50][38].setVisible(false);labels[51][37].setVisible(false);labels[51][38].setVisible(false);
+*/
+        contentPane.add(p,BorderLayout.NORTH);
+        contentPane.add(p2,BorderLayout.CENTER);
+
+    }
+
+
+             /*1*/
+             drawAL(18, 10, 210, 10,jg);
+            /* drawAL(19, 19, 223, 19,jg);*/
+             drawAL(20, 84, 20, 20,jg);
+             drawAL(96, 84, 20, 84,jg);
+             drawAL(152, 84, 114, 84,jg);
+             drawAL(224, 84, 170, 84,jg);
+             drawAL(222, 20, 222, 84,jg);
+
+             /*2*/
+             drawAL(244, 19, 296, 19,jg);
+             drawAL(244, 84, 244, 20,jg);
+             drawAL(295, 84, 242, 84,jg);
+             drawAL(295, 20, 295, 84,jg);
+
+             /*3*/
+             drawAL(20, 103,96, 103,jg);
+             drawAL(20, 203, 20, 103,jg);
+             drawAL(96, 203,20, 203,jg);
+             drawAL(95, 103, 95, 203,jg);
+
+             /*4*/
+             drawAL(116, 103,152, 103, jg);
+             drawAL(116, 203, 116, 103,jg);
+             drawAL(152, 203, 114, 203,jg);
+             drawAL(152, 103, 152, 156,jg);
+             drawAL(152, 172, 152, 203,jg);
+
+             /*5*/
+             drawAL(172, 103,224, 103, jg);
+             drawAL(172, 154,172, 103,jg);
+             drawAL(222, 103, 222, 156,jg);
+             drawAL(220, 154,172, 154,jg);
+
+             /*6*/
+             drawAL(244, 103,296, 103,jg);
+             drawAL(244, 154, 244, 103,jg);
+             drawAL(295, 103,295, 156,jg);
+             drawAL(295, 154,244, 154,jg);
+             /*7*/
+             drawAL(172, 172,224, 172, jg);
+             drawAL(172, 203,172, 172, jg);
+             drawAL(224, 172,224, 203,jg);
+             drawAL(222, 203,172, 203, jg);
+             /*8*/
+             drawAL(244, 172,296, 172,jg);
+             drawAL(244, 203,244, 172, jg);
+             drawAL(295, 172,295, 203,jg);
+             drawAL(295, 203,244, 203, jg);
+             /*9*/
+             drawAL(20, 221,95, 221,jg);
+             drawAL(20, 350, 20, 221,jg);
+             drawAL(95, 350,20, 350,jg);
+             drawAL(95, 221, 95, 255,jg);
+             drawAL(95, 270, 95, 303,jg);
+             drawAL(95, 319, 95, 350,jg);
+             /*10*/
+             drawAL(116, 253, 116, 221,jg);
+             drawAL(116, 221,152, 221, jg);
+             drawAL(151, 221, 151, 255,jg);
+             drawAL(152, 253, 114, 253,jg);
+             /*11*/
+             drawAL(172, 221,224, 221, jg);
+             drawAL(172, 253,172, 221, jg);
+             drawAL(222, 253, 172, 253,jg);
+             drawAL(224, 221,224, 255,jg);
+             /*12*/
+             drawAL(116, 270,152, 270,jg);
+             drawAL(116, 301, 116, 270,jg);
+             drawAL(152, 301, 114, 301,jg);
+             drawAL(151, 270, 151, 301,jg);
+             /*13*/
+             drawAL(172, 270,224, 270, jg);
+             drawAL(172, 301,172, 270, jg);
+             drawAL(224, 270,224, 301,jg);
+             drawAL(222, 301, 172, 301,jg);
+             /*14*/
+             drawAL(116, 319,152, 319,jg);
+             drawAL(116, 350, 116, 319,jg);
+             drawAL(151, 319, 151, 350,jg);
+             drawAL(152, 350, 114, 350,jg);
+             /*15*/
+             drawAL(172, 319,224, 319, jg);
+             drawAL(172, 350,172, 319, jg);
+             drawAL(224, 319,224, 350,jg);
+             drawAL(222, 350, 172, 350,jg);
+
+
+
+
+
+             0.01   0.085     0.081     0.386     1.377
+             0.02   0.168     0.119     0.848     3.099
+             0.03   0.271     0.227     1.089     6.652
+             0.04   0.487     0.211     2.672     12.862
+             0.05   1.26     0.651     5.281     20.819
+             0.06   1.81     1.435     10.487     28.719
+             0.07   3.464     1.56     17.495     42.314
+             0.08   5.05     4.713     24.568     53.283
+             0.09   8.013     4.311     30.705     77.728
+             0.1   9.069     9.111     42.383     80.193
+             0.11   12.851     7.981     47.799     104.589
+             0.12   14.483     11.405     55.299     108.156
+             0.13   19.272     9.168     61.223     131.576
+             0.14   21.784     10.727     65.38     146.951
+             0.15   24.198     12.992     75.862     172.817
+             0.16   27.583     20.268     86.698     191.555
+             0.17   30.872     21.364     98.727     200.981
+             0.18   28.264     21.704     111.174     205.245
+             0.19   27.975     23.937     104.588     218.32
+             0.2   31.004     21.202     102.75     225.784
+             0.21   27.691     23.486     119.4     214.722
+
+
+
+             0.01   34.0      12.0      22.0      0.0     27  12.0  2  22.0
+             0.02   68.0      27.0      40.0      0.0     27  27.0  2  41.0
+             0.03   84.0      38.0      46.0      0.0     27  38.0  2  46.0
+             0.04   99.0      34.0      65.0      0.0     27  34.0  2  65.0
+             0.05   116.0     44.0      72.0      0.0     27  44.0  2  72.0
+             0.06   134.0     44.0      87.0      0.0     27  45.0  2  89.0
+             0.07   164.0     64.0      100.0     0.0     27  61.0  1  3.0    2   100.0
+             0.08   152.0     53.0      98.0      0.0     27  54.0  2  98.0
+             0.09   183.0     74.0      104.0     0.0     27  74.0  1  2.0    2   107.0
+             0.1    199.0     85.0      112.0     0.0     27  75.0  1  11.0   2   113.0
+             0.11   225.0     93.0      124.0     0.0     27  77.0  1  18.0   2   130.0
+             0.12   224.0     97.0      121.0     0.0     27  85.0  1  14.0   2   125.0
+             0.13   218.0     98.0      112.0     0.0     27  82.0  1  13.0   2   119.0   3  4.0
+             0.14   236.0     108.0     120.0     0.0     27  82.0  13  2.0   1   30.0    2  121.0  3  1.0
+             0.15   272.0     144.0     116.0     0.0     24  1.0   27  94.0  12  8.0     13  2.0   1  40.0   2  122.0  3  5.0
+             0.16   285.0     148.0     125.0     0.0     27  94.0  12  5.0   13  1.0     1  47.0   2  133.0  3  5.0
+             0.17   290.0     143.0     136.0     0.0     24  5.0   27  80.0  12  13.0    13  11.0  1  33.0   2  140.0  3  8.0
+             0.18   232.0     117.0     105.0     0.0     27  96.0  12  6.0   1   20.0    2  107.0  3  3.0
+             0.19   256.0     125.0     120.0     0.0     27  96.0  1   38.0  2   122.0
+             0.2    276.0     136.0     120.0     0.0     24  4.0   27  94.0  12  5.0     13  4.0   1  36.0   2  128.0  3  5.0
+             0.21   252.0     120.0     121.0     0.0     27  83.0  12  2.0   1   41.0    2  125.0  3  1.0
+             0.22   186.0     98.0      80.0      0.0     27  76.0  12  2.0   1   25.0    2  83.0
+             0.23   224.0     107.0     113.0     0.0     27  71.0  13  2.0   1   37.0    2  114.0
+             0.24   267.0     149.0     107.0     0.0     24  5.0   27  98.0  12  4.0     1  40.0   2  113.0   3  5.0  4  2.0
+             0.25   254.0     102.0     137.0     0.0     27  74.0  1   43.0  2   137.0
+             0.26   230.0     135.0     95.0      0.0     23  1.0   24  2.0   27  92.0    1  39.0   2  95.0    5  1.0
+             0.27   262.0     148.0     110.0     0.0     27  101.0  1  43.0  2   113.0   3  3.0    4  2.0
+             0.28   205.0     93.0      103.0     0.0     27  63.0  1   39.0  2   103.0
+             0.29   253.0     138.0     108.0     0.0     24  5.0   27  89.0  12  3.0     13  2.0   1  40.0    2  108.0  3  6.0
+             0.3    286.0     167.0     109.0     0.0     24  2.0   27  101.0 12  5.0     13  5.0   1  54.0    2  114.0  3  5.0
+             0.31   229.0     109.0     110.0     0.0     27  71.0  1   49.0  2   108.0   3  1.0
+             0.32   240.0     103.0     107.0     0.0     27  80.0  13  1.0   1   49.0    2  110.0
+             0.33   259.0     126.0     96.0      0.0     27  93.0  12  3.0   13  2.0     1  55.0   2  104.0   3  2.0
+             0.34   201.0     98.0      93.0      0.0     27  68.0  1   40.0  2  93.0
+             0.35   246.0     106.0     107.0     0.0     27  81.0  12  2.0   1  47.0     2  116.0
+             0.36   273.0     137.0     111.0     0.0     24  3.0   27  91.0  12  5.0     13  1.0  1  55.0  2  112.0  3  6.0
+             0.37   254.0     104.0     105.0     0.0     27  86.0  13  2.0   1  44.0     2  122.0
+             0.38   218.0     100.0     94.0      0.0     27  60.0  12  8.0   13  4.0     1  43.0  2  101.0  3  2.0
+             0.39   232.0     102.0     94.0      0.0     27  79.0  1  50.0   2  103.0
+             0.4    263.0     115.0     105.0     0.0     27  91.0  1  54.0   2  118.0
+             0.41   237.0     98.0      87.0      0.0     27  78.0  1  53.0   2  106.0
+             0.42   233.0     119.0     98.0      0.0     27  72.0  13  1.0   1  61.0     2  99.0
+             0.43   231.0     124.0     94.0      0.0     27  80.0  1  50.0   2  94.0     3  7.0
+             0.44   253.0     108.0     105.0     0.0     27  76.0  1  61.0   2  116.0
+             0.45   236.0     123.0     96.0      0.0     27  84.0  1  53.0   2  97.0     3  2.0
+             0.46   253.0     109.0     106.0     0.0     27  77.0  12  1.0   13  3.0     1  60.0  2  110.0  3  2.0
+             0.47   223.0     128.0     91.0      0.0     27  75.0  12  2.0   13  4.0     1  51.0  2  91.0
+             0.48   253.0     123.0     106.0     0.0     27  71.0  12  2.0   13  2.0     1  65.0  2  112.0  3  1.0
+             0.49   228.0     104.0     106.0     0.0     27  71.0  1  48.0   2  108.0    3  1.0
+             0.5    244.0     126.0     101.0     0.0     27  70.0  12  4.0   13  9.0     1  51.0  2  101.0  3  9.0
+
+
+22  1.0
+23  2.0
+24  1.0
+25  1.0
+10  1.0
+11  1.0
+12  1.0
+13  2.0
+14  1.0
+15  1.0
+16  1.0
+17  1.0
+19  1.0
+3  2.0
+4  2.0
+5  2.0
+6  1.0
+8  2.0
+9  1.0
+20  1.0
+21  1.0
+
+22  4.0
+23  2.0
+24  4.0
+25  2.0
+10  2.0
+11  2.0
+12  2.0
+13  3.0
+14  2.0
+15  2.0
+16  2.0
+17  2.0
+18  2.0
+19  3.0
+3  4.0
+4  3.0
+5  3.0
+6  2.0
+7  1.0
+8  2.0
+9  2.0
+20  2.0
+21  2.0
+
+
+0.01   27.0     26.0     1.0     0.0
+0.02   55.0     53.0     2.0     0.0
+
+
+
+0.01   27.0     26.0     1.0     0.0
+0.02   55.0     53.0     2.0     0.0
+0.03   74.0     70.0     4.0     0.0
+
+22  3.0
+23  3.0
+24  3.0
+25  3.0
+10  3.0
+11  3.0
+12  3.0
+13  3.0
+14  3.0
+15  3.0
+16  3.0
+17  5.0
+19  3.0
+3  3.0
+4  6.0
+5  4.0
+6  4.0
+8  4.0
+9  3.0
+20  3.0
+21  6.0
+
+
+
+22  5.0
+23  4.0
+24  4.0
+25  3.0
+10  7.0
+11  4.0
+12  4.0
+13  4.0
+14  4.0
+15  6.0
+16  4.0
+17  5.0
+18  3.0
+19  4.0
+3  5.0
+4  4.0
+5  8.0
+6  7.0
+8  4.0
+9  4.0
+20  4.0
+21  4.0
+
+
+
+22  5.0
+23  5.0
+24  6.0
+25  4.0
+10  5.0
+11  5.0
+12  9.0
+13  5.0
+14  5.0
+15  5.0
+16  5.0
+17  5.0
+19  5.0
+3  10.0
+4  10.0
+5  8.0
+6  10.0
+8  5.0
+9  5.0
+20  5.0
+21  7.0
+
+
+
+22  6.0
+23  7.0
+24  8.0
+10  7.0
+11  7.0
+12  6.0
+13  8.0
+14  9.0
+15  7.0
+16  8.0
+17  8.0
+19  6.0
+3  6.0
+4  7.0
+5  11.0
+6  9.0
+7  2.0
+8  7.0
+9  6.0
+20  7.0
+21  8.0
+
+
+22  9.0
+23  7.0
+24  8.0
+25  4.0
+10  7.0
+11  13.0
+12  7.0
+14  7.0
+15  7.0
+16  7.0
+17  7.0
+19  9.0
+3  12.0
+4  14.0
+5  14.0
+6  14.0
+8  9.0
+9  8.0
+20  8.0
+21  9.0
+
+
+
+
+22  8.0
+23  8.0
+24  11.0
+25  7.0
+10  8.0
+11  13.0
+12  4.0
+13  9.0
+14  12.0
+15  8.0
+16  8.0
+17  8.0
+19  9.0
+3  10.0
+4  15.0
+5  16.0
+6  16.0
+7  2.0
+8  8.0
+9  9.0
+20  8.0
+21  8.0
+
+
+
+22  12.0
+23  10.0
+24  10.0
+25  4.0
+10  13.0
+11  11.0
+12  9.0
+13  7.0
+14  11.0
+15  9.0
+16  11.0
+17  9.0
+18  4.0
+19  11.0
+3  7.0
+4  17.0
+5  18.0
+6  13.0
+7  2.0
+8  10.0
+9  9.0
+20  9.0
+21  9.0
+
+
+
+22  14.0
+23  15.0
+24  10.0
+25  6.0
+10  11.0
+11  13.0
+12  5.0
+13  5.0
+14  14.0
+15  10.0
+16  12.0
+17  10.0
+18  5.0
+19  12.0
+3  10.0
+4  19.0
+5  17.0
+6  14.0
+7  1.0
+8  11.0
+9  13.0
+20  9.0
+21  10.0
+
+
+
+22  11.0
+23  17.0
+24  8.0
+25  7.0
+10  14.0
+11  18.0
+12  8.0
+13  10.0
+14  19.0
+15  11.0
+16  11.0
+17  13.0
+18  5.0
+19  11.0
+3  7.0
+4  22.0
+5  19.0
+6  25.0
+7  4.0
+8  13.0
+9  14.0
+20  8.0
+21  7.0
+
+
+
+22  15.0
+23  15.0
+24  11.0
+25  6.0
+10  15.0
+11  17.0
+12  10.0
+13  7.0
+14  16.0
+15  14.0
+16  15.0
+17  14.0
+18  2.0
+19  12.0
+3  10.0
+4  15.0
+5  17.0
+6  31.0
+7  2.0
+8  21.0
+9  16.0
+20  10.0
+21  13.0
+
+
+22  17.0
+23  19.0
+24  15.0
+25  9.0
+26  2.0
+10  18.0
+11  16.0
+12  7.0
+13  12.0
+14  16.0
+15  16.0
+16  16.0
+17  16.0
+18  1.0
+19  21.0
+3  10.0
+4  19.0
+5  22.0
+6  33.0
+7  4.0
+8  22.0
+9  19.0
+20  6.0
+21  10.0
+
+
+
+
+22  20.0
+23  17.0
+24  12.0
+25  11.0
+10  18.0
+11  16.0
+12  10.0
+13  7.0
+14  22.0
+15  16.0
+16  16.0
+17  17.0
+18  3.0
+19  15.0
+3  7.0
+4  21.0
+5  19.0
+6  31.0
+7  9.0
+8  26.0
+9  21.0
+20  11.0
+21  9.0
+
+
+22  21.0
+23  14.0
+24  14.0
+25  6.0
+10  14.0
+11  22.0
+12  13.0
+13  8.0
+14  19.0
+15  15.0
+16  20.0
+17  17.0
+18  4.0
+19  16.0
+3  14.0
+4  19.0
+5  28.0
+6  40.0
+7  5.0
+8  27.0
+9  24.0
+20  15.0
+21  8.0
+
+
+
+
+22  19.0
+23  20.0
+24  7.0
+25  3.0
+26  1.0
+10  22.0
+11  23.0
+12  13.0
+13  10.0
+14  26.0
+15  16.0
+16  16.0
+17  17.0
+18  4.0
+19  18.0
+3  9.0
+4  29.0
+5  30.0
+6  41.0
+7  5.0
+8  26.0
+9  28.0
+20  22.0
+21  14.0
+
+22  21.0
+23  16.0
+24  17.0
+25  9.0
+26  4.0
+10  20.0
+11  21.0
+12  14.0
+13  10.0
+14  22.0
+15  28.0
+16  21.0
+17  20.0
+18  10.0
+19  24.0
+3  7.0
+4  28.0
+5  31.0
+6  43.0
+7  6.0
+8  37.0
+9  30.0
+20  14.0
+21  8.0
+
+
+
+22  14.0
+23  24.0
+24  11.0
+25  3.0
+26  13.0
+10  27.0
+11  21.0
+12  14.0
+13  18.0
+14  22.0
+15  20.0
+16  27.0
+17  21.0
+18  15.0
+19  17.0
+3  11.0
+4  26.0
+5  35.0
+6  49.0
+7  3.0
+8  34.0
+9  23.0
+20  13.0
+21  12.0
+
+
+
+22  18.0
+23  22.0
+24  14.0
+25  8.0
+10  21.0
+11  23.0
+12  8.0
+13  9.0
+14  26.0
+15  27.0
+16  18.0
+17  24.0
+18  13.0
+19  19.0
+3  12.0
+4  24.0
+5  25.0
+6  45.0
+7  11.0
+8  34.0
+9  26.0
+20  15.0
+21  8.0
+
+
+
+22  15.0
+23  21.0
+24  6.0
+25  6.0
+26  7.0
+10  25.0
+11  19.0
+12  8.0
+13  11.0
+14  15.0
+15  18.0
+16  28.0
+17  24.0
+18  10.0
+19  20.0
+3  17.0
+4  16.0
+5  35.0
+6  45.0
+7  8.0
+8  32.0
+9  29.0
+20  15.0
+21  4.0
+
+
+
+22  21.0
+23  24.0
+24  10.0
+25  2.0
+10  31.0
+11  23.0
+12  9.0
+13  7.0
+14  20.0
+15  16.0
+16  24.0
+17  20.0
+18  7.0
+19  19.0
+3  16.0
+4  27.0
+5  36.0
+6  43.0
+7  1.0
+8  33.0
+9  28.0
+20  8.0
+21  19.0
+
+
+
+22  23.0
+23  20.0
+24  19.0
+25  12.0
+26  8.0
+10  19.0
+11  30.0
+12  8.0
+13  10.0
+14  23.0
+15  16.0
+16  28.0
+17  15.0
+18  10.0
+19  17.0
+3  7.0
+4  26.0
+5  23.0
+6  35.0
+7  9.0
+8  24.0
+9  19.0
+20  17.0
+21  11.0
+
+
+
+22  25.0
+23  14.0
+24  19.0
+25  9.0
+26  3.0
+10  27.0
+11  26.0
+12  11.0
+13  11.0
+14  15.0
+15  23.0
+16  28.0
+17  31.0
+18  3.0
+19  24.0
+3  8.0
+4  25.0
+5  26.0
+6  32.0
+7  2.0
+8  26.0
+9  27.0
+20  13.0
+21  5.0
+
+
+
+22  18.0
+23  23.0
+24  18.0
+25  8.0
+26  2.0
+10  12.0
+11  21.0
+12  15.0
+13  8.0
+14  21.0
+15  25.0
+16  17.0
+17  20.0
+18  3.0
+19  22.0
+3  11.0
+4  19.0
+5  34.0
+6  40.0
+7  5.0
+8  34.0
+9  21.0
+20  14.0
+21  8.0
+
+
+
+22  22.0
+23  14.0
+24  20.0
+25  17.0
+26  9.0
+10  21.0
+11  29.0
+12  10.0
+13  11.0
+14  22.0
+15  22.0
+16  19.0
+17  16.0
+18  6.0
+19  17.0
+3  5.0
+4  31.0
+5  26.0
+6  31.0
+7  9.0
+8  25.0
+9  16.0
+20  20.0
+21  13.0
+
+
+
+22  22.0
+23  19.0
+24  19.0
+25  10.0
+10  17.0
+11  28.0
+12  11.0
+13  12.0
+14  25.0
+15  14.0
+16  26.0
+17  26.0
+18  11.0
+19  25.0
+3  2.0
+4  17.0
+5  26.0
+6  34.0
+7  3.0
+8  27.0
+9  25.0
+20  9.0
+21  9.0
+
+22  16.0
+23  25.0
+24  7.0
+25  11.0
+26  2.0
+10  21.0
+11  31.0
+12  9.0
+13  4.0
+14  21.0
+15  19.0
+16  19.0
+17  26.0
+18  6.0
+19  23.0
+3  4.0
+4  27.0
+5  34.0
+6  32.0
+7  7.0
+8  27.0
+9  22.0
+20  14.0
+21  12.0
+
+22  21.0
+23  13.0
+24  9.0
+25  10.0
+10  18.0
+11  23.0
+12  18.0
+13  8.0
+14  21.0
+15  22.0
+16  24.0
+17  28.0
+18  3.0
+19  18.0
+3  13.0
+4  27.0
+5  27.0
+6  34.0
+7  3.0
+8  34.0
+9  19.0
+20  19.0
+21  11.0
+
+0.29   420.0     35.0     2.0     0.0
+22  18.0
+23  26.0
+24  12.0
+25  10.0
+26  1.0
+27  2.0
+10  21.0
+11  18.0
+12  3.0
+13  11.0
+14  26.0
+15  24.0
+16  21.0
+17  26.0
+18  6.0
+19  22.0
+3  12.0
+4  29.0
+5  29.0
+6  33.0
+7  5.0
+8  24.0
+9  15.0
+20  14.0
+21  12.0
+
+0.3   432.0     46.0     3.0     0.0
+22  20.0
+23  20.0
+24  7.0
+25  4.0
+10  23.0
+11  20.0
+12  10.0
+13  11.0
+14  19.0
+15  20.0
+16  36.0
+17  26.0
+18  4.0
+19  24.0
+3  11.0
+4  29.0
+5  28.0
+6  48.0
+7  1.0
+8  28.0
+9  25.0
+20  12.0
+21  6.0
+
+
+0.01   27.0     26.0     1.0     0.0
+0.02   55.0     53.0     2.0     0.0
+0.03   74.0     70.0     4.0     0.0
+0.04   101.0     94.0     7.0     0.0
+0.05   129.0     119.0     10.0     0.0
+0.06   150.0     141.0     9.0     0.0
+0.07   180.0     152.0     14.0     0.0
+0.08   205.0     150.0     16.0     0.0
+0.09   225.0     147.0     11.0     0.0
+0.1   246.0     177.0     14.0     0.0
+0.11   282.0     186.0     17.0     0.0
+0.12   304.0     139.0     8.0     0.0
+0.13   346.0     132.0     6.0     0.0
+0.14   354.0     138.0     4.0     0.0
+0.15   383.0     99.0     7.0     0.0
+0.16   419.0     118.0     6.0     0.0
+0.17   461.0     72.0     6.0     0.0
+0.18   473.0     87.0     8.0     0.0
+0.19   450.0     64.0     3.0     0.0
+0.2   434.0     53.0     4.0     0.0
+0.21   444.0     59.0     2.0     0.0
+0.22   429.0     42.0     4.0     0.0
+0.23   433.0     49.0     1.0     0.0
+0.24   419.0     36.0     0.0     0.0
+0.25   431.0     46.0     2.0     0.0
+0.26   417.0     32.0     2.0     0.0
+0.27   419.0     33.0     3.0     0.0
+0.28   423.0     37.0     3.0     0.0
+0.29   420.0     35.0     2.0     0.0
+0.3   432.0     46.0     3.0     0.0
+0.31   426.0     40.0     3.0     0.0
+
+
+22  15.0
+23  20.0
+24  5.0
+25  14.0
+10  24.0
+11  23.0
+12  9.0
+13  14.0
+14  30.0
+15  12.0
+16  24.0
+17  24.0
+18  10.0
+19  21.0
+3  4.0
+4  28.0
+5  33.0
+6  38.0
+7  6.0
+8  21.0
+9  18.0
+20  19.0
+21  14.0
+
+
+
+22  18.0
+23  23.0
+24  13.0
+25  5.0
+26  1.0
+10  18.0
+11  23.0
+12  10.0
+13  3.0
+14  11.0
+15  23.0
+16  27.0
+17  26.0
+18  4.0
+19  22.0
+3  16.0
+4  16.0
+5  26.0
+6  38.0
+8  30.0
+9  21.0
+20  23.0
+21  16.0
+
+
+
+22  19.0
+23  15.0
+24  17.0
+25  4.0
+10  19.0
+11  20.0
+12  11.0
+13  12.0
+14  26.0
+15  17.0
+16  31.0
+17  25.0
+18  3.0
+19  18.0
+3  15.0
+4  28.0
+5  27.0
+6  29.0
+7  1.0
+8  27.0
+9  20.0
+20  24.0
+21  13.0
+
+
+
+
+22  18.0
+23  19.0
+24  16.0
+25  11.0
+26  1.0
+10  18.0
+11  24.0
+12  8.0
+13  11.0
+14  19.0
+15  17.0
+16  30.0
+17  24.0
+18  5.0
+19  21.0
+3  10.0
+4  23.0
+5  24.0
+6  45.0
+7  1.0
+8  32.0
+9  16.0
+20  16.0
+21  8.0
+
+0.35   429.0     42.0     2.0     0.0
+22  10.0
+23  20.0
+24  14.0
+25  10.0
+27  2.0
+10  17.0
+11  27.0
+12  17.0
+13  5.0
+14  31.0
+15  11.0
+16  15.0
+17  22.0
+18  2.0
+19  21.0
+3  19.0
+4  31.0
+5  29.0
+6  47.0
+7  4.0
+8  28.0
+9  22.0
+20  17.0
+21  8.0
+
+0.36   420.0     37.0     0.0     0.0
+22  19.0
+23  20.0
+24  22.0
+25  12.0
+26  5.0
+27  2.0
+10  15.0
+11  30.0
+12  7.0
+13  12.0
+14  22.0
+15  16.0
+16  26.0
+17  15.0
+18  3.0
+19  14.0
+3  14.0
+4  29.0
+5  28.0
+6  45.0
+8  26.0
+9  20.0
+20  6.0
+21  12.0
+
+0.37   410.0     26.0     1.0     0.0
+22  22.0
+23  17.0
+24  20.0
+25  6.0
+10  19.0
+11  32.0
+12  17.0
+13  3.0
+14  29.0
+15  12.0
+16  17.0
+17  21.0
+18  8.0
+19  14.0
+3  12.0
+4  25.0
+5  29.0
+6  50.0
+7  1.0
+8  25.0
+9  16.0
+20  9.0
+21  6.0
+
+0.38   424.0     41.0     0.0     0.0
+22  18.0
+23  23.0
+24  13.0
+25  4.0
+27  1.0
+10  18.0
+11  23.0
+12  16.0
+13  7.0
+14  21.0
+15  17.0
+16  30.0
+17  34.0
+19  19.0
+3  15.0
+4  21.0
+5  34.0
+6  35.0
+8  30.0
+9  16.0
+20  19.0
+21  10.0
+
+0.39   409.0     24.0     2.0     0.0
+22  17.0
+23  24.0
+24  22.0
+25  10.0
+10  21.0
+11  26.0
+12  25.0
+13  14.0
+14  23.0
+15  9.0
+16  17.0
+17  15.0
+18  2.0
+19  18.0
+3  10.0
+4  31.0
+5  24.0
+6  20.0
+7  3.0
+8  19.0
+9  26.0
+20  20.0
+21  13.0
+
+0.4   424.0     37.0     2.0     0.0
+22  19.0
+23  22.0
+24  12.0
+25  3.0
+27  1.0
+10  11.0
+11  22.0
+12  14.0
+13  8.0
+14  14.0
+15  8.0
+16  28.0
+17  26.0
+19  14.0
+3  16.0
+4  25.0
+5  41.0
+6  49.0
+7  1.0
+8  40.0
+9  18.0
+20  15.0
+21  17.0
+
+0.41   410.0     26.0     1.0     0.0
+22  19.0
+23  17.0
+24  15.0
+25  6.0
+26  2.0
+10  12.0
+11  19.0
+12  13.0
+13  9.0
+14  13.0
+15  12.0
+16  28.0
+17  18.0
+18  5.0
+19  20.0
+3  13.0
+4  26.0
+5  40.0
+6  49.0
+7  8.0
+8  28.0
+9  21.0
+20  10.0
+21  7.0
+
+
+
+22  9.0
+23  21.0
+24  12.0
+25  3.0
+26  2.0
+27  1.0
+10  12.0
+11  36.0
+12  8.0
+13  4.0
+14  25.0
+15  20.0
+16  15.0
+17  19.0
+18  1.0
+19  26.0
+3  9.0
+4  27.0
+5  34.0
+6  39.0
+7  4.0
+8  23.0
+9  20.0
+20  20.0
+21  13.0
+
+0.43   407.0     22.0     2.0     0.0
+22  22.0
+23  16.0
+24  21.0
+25  6.0
+10  14.0
+11  24.0
+12  10.0
+13  7.0
+14  22.0
+15  15.0
+16  12.0
+17  19.0
+18  4.0
+19  19.0
+3  5.0
+4  24.0
+5  29.0
+6  50.0
+7  5.0
+8  26.0
+9  21.0
+20  18.0
+21  18.0
+
+0.44   419.0     28.0     8.0     0.0
+22  21.0
+23  27.0
+24  23.0
+25  3.0
+26  2.0
+10  19.0
+11  31.0
+12  20.0
+13  10.0
+14  31.0
+15  16.0
+16  21.0
+17  17.0
+18  1.0
+19  19.0
+3  15.0
+4  25.0
+5  29.0
+6  33.0
+8  14.0
+9  21.0
+20  10.0
+21  11.0
+
+0.45   414.0     28.0     3.0     0.0
+22  22.0
+23  18.0
+24  14.0
+25  7.0
+10  17.0
+11  21.0
+12  16.0
+13  16.0
+14  16.0
+15  22.0
+16  26.0
+17  22.0
+18  6.0
+19  22.0
+3  9.0
+4  15.0
+5  22.0
+6  35.0
+7  6.0
+8  29.0
+9  23.0
+20  20.0
+21  10.0
+
+0.46   408.0     23.0     2.0     0.0
+22  17.0
+23  24.0
+24  14.0
+25  5.0
+27  1.0
+10  24.0
+11  15.0
+12  17.0
+13  8.0
+14  17.0
+15  26.0
+16  24.0
+17  17.0
+18  1.0
+19  18.0
+3  19.0
+4  31.0
+5  17.0
+6  38.0
+7  2.0
+8  27.0
+9  21.0
+20  15.0
+21  10.0
+
+0.47   418.0     32.0     3.0     0.0
+22  22.0
+23  21.0
+24  18.0
+25  11.0
+10  26.0
+11  22.0
+12  9.0
+13  14.0
+14  30.0
+15  19.0
+16  16.0
+17  26.0
+19  20.0
+3  9.0
+4  28.0
+5  22.0
+6  32.0
+7  1.0
+8  27.0
+9  23.0
+20  11.0
+21  11.0
+
+0.48   414.0     27.0     4.0     0.0
+22  24.0
+23  30.0
+24  13.0
+25  4.0
+10  23.0
+11  22.0
+12  14.0
+13  14.0
+14  23.0
+15  25.0
+16  22.0
+17  31.0
+19  17.0
+3  13.0
+4  13.0
+5  30.0
+6  30.0
+8  22.0
+9  16.0
+20  15.0
+21  13.0
+
+0.49   407.0     23.0     1.0     0.0
+22  20.0
+23  25.0
+24  13.0
+25  7.0
+10  23.0
+11  20.0
+12  13.0
+13  17.0
+14  22.0
+15  19.0
+16  27.0
+17  18.0
+18  1.0
+19  24.0
+3  11.0
+4  9.0
+5  18.0
+6  43.0
+7  3.0
+8  34.0
+9  20.0
+20  10.0
+21  10.0
+
+0.5   409.0     26.0     0.0     0.0
+22  20.0
+23  16.0
+24  18.0
+25  4.0
+26  1.0
+10  22.0
+11  25.0
+12  14.0
+13  8.0
+14  17.0
+15  22.0
+16  29.0
+17  32.0
+18  4.0
+19  18.0
+3  14.0
+4  27.0
+5  23.0
+6  27.0
+7  5.0
+8  20.0
+9  12.0
+20  15.0
+21  16.0
+
+
+
+
+
+

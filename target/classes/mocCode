@@ -1,0 +1,39 @@
+ /**
+     *
+     * @param p_f_lists
+     * @param chr
+     * @throws Exception
+     */
+    public  List<Chrome> insertParetoFront(List<Chrome> p_f_lists,Chrome chr) throws Exception{
+
+        int maxLimit = 100;
+        int N=20;
+        if(chr!=null){
+            p_f_lists.add(chr);
+        }
+        if(p_f_lists.size()<=maxLimit){
+            return p_f_lists;
+        }else{
+            while (p_f_lists.size()>maxLimit){
+                int popSize = p_f_lists.size();
+
+                this.computeRanking(p_f_lists);
+                p_f_lists = this.crowdingDistance(popSize);
+
+                int worstRank = p_f_lists.get(p_f_lists.size() - 1).getRank();
+                /*寻找当前等级i个体的最大索引*/
+                int cur_index = getMaxIndex1(p_f_lists, worstRank)+1;
+                /*等级为i的个体*/
+                List<Chrome> tmp_lists = copyChrome(p_f_lists, cur_index, p_f_lists.size());
+                /*根据拥挤度从大到小排序*/
+                TDCGAUtil.popSortByNd(tmp_lists);
+
+                Chrome c = tmp_lists.get(tmp_lists.size()-1);
+                p_f_lists.remove(c);
+            }
+            return p_f_lists;
+        }
+
+    }
+
+

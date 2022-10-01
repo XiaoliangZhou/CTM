@@ -1,0 +1,1209 @@
+
+package transport.ctm.main;
+
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
+import transport.ctm.model.ctmCell;
+import transport.ctm.model.ctmLinks;
+import transport.ctm.model.intersection;
+import transport.ctm.util.constant;
+import transport.ctm.util.strutil;
+import transport.graph.Edge;
+import transport.graph.IniteGraph;
+import transport.graph.Vertex;
+import org.apache.commons.lang3.ArrayUtils;
+
+import java.util.*;
+
+/**
+ * @author liangxiao.zhou
+ * @version V2.0
+ * @Title: buildCtm.java
+ * @Package transport.ctm.main
+ * @Description: 设置相位
+ * @date Jan 14, 2019 16:11:14 PM
+ */
+public class buildCtm {
+
+    private static int a, b, c;
+    private static int k_type;
+    /**
+     * 初始化元胞、链接、路段 待完善...
+     * @Title: build_ctm_initiaze
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param vStr  文本行数据
+     * @param vlist 节点集合
+     * @param els   节点对应的边
+     * @param g     Object
+     * @param w     权重
+     * @return void 返回类型
+     * @throws
+     */
+    public static void initiazeCtm(String[] vStr,
+                                   List<Vertex> vlist,
+                                   List<String> els, IniteGraph g, double w) throws Exception {
+        int n_cell = constant.ctms.size();
+        //1、初始化路段元胞
+        constant.ctms = initCtm.ctmAddCells
+                    (vStr, constant.ctms, constant.cl_cap);
+        //2、初始化元胞链接
+        constant.clks = initCtm.ctmAddLinks(n_cell,
+                                constant.ctms, constant.clks);
+        //3、初始化路段
+        Edge e = initCtm.ctmAddLane(vStr,
+                     g, n_cell, vlist, constant.ctms, constant.cl_cap, w);
+        //4、节点对应路段集合
+        els.add(e.l_label);
+        //5、路段集合
+        constant.ctmls.add(e);
+    }
+    /**
+     * 交叉口相位 待完善....
+     * @Title: buidCtmIntersection
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return void    返回类型
+     * @throws
+     */
+    public static void buildIntersectionPhase() {
+        List<intersection> cints = constant.cints; /*节点信息*/
+        try {
+            if (!cints.isEmpty()) {
+                for (intersection ints : cints) {
+                    int intStyle = Integer.parseInt(ints.getInt_style());/*交叉口类型*/
+                    List<int[]> rs = getCellIdByLaneLabel(ints.phase_map.get("0")); /*右转车流*/
+
+                    initCtm.delMapValueByKey(ints.phase_map,"0");
+                    ints.phase_map.forEach((key, list) -> {
+                        if(!list.isEmpty()){
+                            /*相位设置*/
+                            setTOrTTPhase(rs,
+                                    getCellIdByLaneLabel(list),ints,Integer.parseInt(key));
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {e.printStackTrace();}
+         /*初始化相位*/
+        List l = constant.clkts;
+        for (int i = 0; i < constant.cints.size(); i++) {
+            if(PhaseFilter(i)){
+                ctmSetPhase(i, 1);
+            }
+        }
+        List<ctmLinks> lks = constant.clks;
+        for (int i = 0; i < lks.size(); i++) {
+            l.add(lks.get(i));
+        }
+        lks.clear();
+    }
+    /**
+     * 是否转换相位
+     * @param index
+     * @return
+     */
+    public static boolean PhaseFilter(int index){
+        int[] p = new int[]{1,2,7,13};
+        return !ArrayUtils.contains(p,index+1);
+    }
+    /**
+     * 交叉口相位 待完善...
+     * @Title: setRightPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param rs 右转相位
+     * @param l 主相位
+     * @param ints 节点
+     * @param phikey 相位序列
+     * @return void  返回类型
+     * @throws
+     */
+    public static void setTOrTTPhase(List<int[]> rs, List<int[]> l, intersection ints, int phikey){
+        int intStyle = Integer.parseInt(ints.getInt_style());
+        int startIndex = initCtm.getLinkLength();
+        List lss = new LinkedList();
+        if(!rs.isEmpty()){
+            if(intStyle == 3){
+                setTNodePhase(l,ints,phikey); /*设置T节点内部元胞 实现内部元胞传输*/
+            }else if(intStyle == 4){
+                addCtmFour(l,ints); /*十字形节点内部元胞*/
+            }else{
+                setDeformityPhase(rs,l); /*处理 1、2、7、13 节点*/
+            }
+        }
+        /*创建元胞链接*/
+        setctmCellAndLink(rs,l,ints,phikey);
+        int toIndex = initCtm.getLinkLength()-1 ;
+        LinkedHashMap<Integer,int[]> phases = ints.getPhases();
+        phases.put(phikey,new int[]{startIndex,toIndex});
+        ints.setPhases(phases);
+
+    }
+    /**
+     * 交叉口相位，包括主相位、右转相位
+     * @Title: setRightPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param olist 右转相位
+     * @param attr  主相位
+     * @param ints  节点
+     * @return void    返回类型
+     * @throws
+     */
+    private static void setctmCellAndLink(List<int[]> olist, List<int[]> attr, intersection ints, int phikey) {
+        int intStyle = Integer.parseInt(ints.getInt_style());
+        if (!olist.isEmpty()&&!attr.isEmpty()) {
+            if(intStyle == 3 || (intStyle == 4 &&(phikey == 1
+                    || phikey == 3))){
+                setTOtherPhase(olist,attr,ints); /*T 型交叉口、十字形交叉口 1/3相位处理*/
+            }
+            /*设置主相位*/
+            if(intStyle == 4){
+                if(phikey == 2|| phikey == 4){
+                    /*处理 2 、4 相位*/
+                    setTTOthersPhase(olist,attr,ints);
+                }
+            }
+            if(intStyle!=2){
+                /*右转相位*/
+                setRightPhase(olist,attr);
+                /*重置元胞链接*/
+                restCtmCellLink(attr);
+            }
+        }
+    }
+
+    /**
+     * 设置右转相位
+     * @Title: setRightPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param olist 右转相位
+     * @param attr  主相位
+     * @return void    返回类型
+     * @throws
+     */
+    private static void setRightPhase(List<int[]> olist,List<int[]> attr){
+        if(!olist.isEmpty()&&!attr.isEmpty()){
+            // 获取右转相位
+            List<int[]> r =  getRightPhase(olist,attr);
+            if (strutil.isNotNull(r)) {
+                r.forEach((arrs)->{
+                    addCtmLink(0,arrs);
+                });
+            }
+        }
+    }
+    /**
+     * T 型交叉口2相位第1链接
+     * @Title: setT2Phase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param l 2相位
+     * @param ints 节点
+     * @param phikey
+     * @return void    返回类型
+     * @throws
+     */
+    private static void setTNodePhase(List<int[]> l, intersection ints, int phikey){
+        if(!l.isEmpty()){
+            ctmCell c = constant.ctms.get(l.get(0)[0]);
+            switch(phikey){
+                case 1:
+                    /*T 型交叉口第一相位*/
+                    addCtmInnerCell(l.get(0),ints);
+                    break;
+                case 2:
+                    /*T 型交叉口第二相位*/
+                    c.setChild_id(strutil.
+                            insert(c.getChild_id(), l.get(0)[1]));
+                    addCtmInnerCell(l.get(1),ints);
+                    addCtmLink(2,strutil.insert
+                            (initCtm.getCell(l.get(0)[0]).getChild_id(),l.get(0)[0],0));
+                    break;
+                case 3:
+                    /*T 型交叉口第三相位*/
+                    c.setChild_id(strutil.insert(c.getChild_id(), l.get(0)[1]));
+                    break;
+            }
+        }
+    }
+    /**
+     * T 型交叉口、十字形1/3相位
+     * @Title: setTOtherPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param attr 2相位
+     * @param ints 节点
+     * @return void    返回类型
+     * @throws
+     */
+     private static void setTOtherPhase(List<int[]> olist, List<int[]> attr, intersection ints){
+         /*节点链接 分流*/
+         for (int[] atr : attr) {
+             for (int[] arr : olist) {
+                 int index = initCtm.searchIndex(atr,arr);
+                 if(index == 0){
+                     /*节点链接 分流*/
+                     int[] cc = new int[]{};
+                     ctmCell c = initCtm.getCell(atr[index]);
+                     cc = getLinkCells(c.getChild_id(), arr[index+1], atr[index], 0);//c.setChild_id(cc);
+                     addCtmLink(2, cc);
+                     break;
+                 }
+             }
+         }
+         /*节点链接 合流*/
+         for (int[] atr : attr) {
+             for (int[] arr : olist) {
+                 int index = initCtm.searchIndex(atr,arr);
+                 if(index == 1){
+                     /*节点链接 分流*/
+                     int[] cf = new int[]{};
+                     ctmCell c = initCtm.getCell(atr[index]);
+                     cf = getLinkCells(c.getFather_id(), arr[index-1], atr[index], 2);//c.setFather_id(cf);
+                     addCtmLink(1, cf);
+                     break;
+                 }
+             }
+         }
+     }
+    /**
+     * 十字型交叉口(2,4)相位 待完善....
+     * @Title: setTTOthersPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param olist 右转相位
+     * @param attr 2,4 相位链接
+     * @param ints 节点
+     * @return void    返回类型
+     * @throws
+     */
+    private static void setTTOthersPhase(List<int[]> olist, List<int[]> attr, intersection ints){
+        /*分流*/
+        for (int[] atr : attr) {
+            for (int[] arr : olist) {
+                int index = initCtm.searchIndex(atr,arr);
+                if(index == 0){
+                    addCtmInnerCell(arr,ints);
+                    ctmCell c = initCtm.getCell(atr[index]);
+                    int[] cc = strutil.insert(c.getChild_id(), atr[index], 0);
+                    addCtmLink(2, cc);
+                    break;
+                }
+            }
+        }
+        /*合流*/
+        attr.forEach((atr)->{
+            ctmCell ctc = initCtm.getCell(atr[1]);
+            if (ctc != null) {
+                int[] cf = ctc.getFather_id();
+                if(cf !=null && cf.length == 2){
+                    cf = strutil.insert(ctc.getFather_id(), atr[1]);
+                    addCtmLink(1, cf);
+                }
+            }
+        });
+    }
+
+    /**
+     * 处理 1、2、7、13 节点元胞链接
+     * @param olist
+     */
+    private static void setDeformityPhase(List<int[]> rs,List<int[]> olist){
+        /*右转链接*/
+        rs.forEach((arr)->{
+            addCtmLink(0,arr);
+        });
+        /*左转链接*/
+        olist.forEach((all)->{
+            addCtmLink(0,all);
+        });
+    }
+
+    /**
+     * 添加元胞链接
+     * @Title: addCtmLink
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param kType 链接类型
+     * @param lCells 元胞
+     * @return int[]    返回类型
+     * @throws
+     */
+    private static void addCtmLink(int kType, int[] lCells){
+        ctmLinks clk = null;
+        int n_link = constant.clkts.size();
+        clk = new ctmLinks(kType, lCells, 1.0, 0);
+        constant.clkts.add(clk);
+    }
+    /**
+     * 获取元胞链接
+     * @Title: getLinkCells
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return int[]    返回类型
+     * @throws
+     */
+    private static int[] getLinkCells(int[] lcells,int v1,int v2,int index){
+        strutil sl = new strutil();
+        return sl.insert(sl.insert(lcells,v1),v2,index);
+    }
+    /**
+     * 创建内部元胞(T型)
+     * @Title: addCtmCell
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return void    返回类型
+     * @throws
+     */
+    private static void addCtmInnerCell(int[] attrs, intersection ints) {
+            int n_cts = constant.ctms.size();
+            /*出口、进口元胞对象*/
+            ctmCell c1 = constant.ctms.get(attrs[0]);ctmCell c2 = constant.ctms.get(attrs[1]);
+            strutil s = new strutil();
+            if (checkCell(attrs)) {
+
+                ctmCell c = new ctmCell();
+                c.setC_id(n_cts);
+                c.setFather_id(new int[]{attrs[0]});/*父元胞id*/
+                c.setC_cap(c1.getC_cap()); /*元胞容纳能力*/
+                c.setC_rate(c1.getC_rate()); /*元胞饱和流量*/
+                c.setChild_id(new int[]{attrs[1]}); /*子元胞id*/
+
+                constant.ctms.add(c);
+                ints.setInner_cells(s.insert(ints.inner_cells, n_cts));
+            }
+            c1.setChild_id(s.insert(c1.getChild_id(), n_cts)); /*出口子元胞*/
+            c2.setFather_id(s.insert(c2.getFather_id(), n_cts)); /*进口父元胞*/
+    }
+    /**
+     * 十字形节点内部元胞
+     * @Title: addCtmFourInnerCell
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param atts 相位集合
+     * @param ints 节点
+     * @return void  返回类型
+     * @throws
+     */
+    private static void addCtmFour(List<int[]> atts,intersection ints){
+        atts.forEach((attrs)->{
+            addCtmInnerCell(attrs,ints);
+        });
+    }
+    /**
+     * 重置元胞链接
+     * @Title: restCtmCellLink
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param l
+     * @return void  返回类型
+     * @throws
+     */
+    private static void restCtmCellLink(List<int[]> l){
+        if(!l.isEmpty()) l.forEach((arrs) -> {
+            int toIndex = 0;
+            int arl = arrs.length;
+            while (toIndex < arl) {
+                ctmCell c = initCtm.getCell(arrs[toIndex]);
+                if(toIndex == 0){
+                     c.setChild_id(new int[]{});
+                }else{
+                     c.setFather_id(new int[]{});
+                }
+                ++toIndex;
+            }
+
+        });
+    }
+    /**
+     * 元胞编号校验
+     * @Title: ctm_check_cell
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return void  返回类型
+     * @throws
+     */
+    private static boolean checkCell(int[] attrs) {
+        if (attrs != null && attrs.length != 0) {
+            for (int i = 0; i < attrs.length; i++) {
+                if (attrs[i] < 0 || attrs[i] > constant.ctms.size() - 1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    /**
+     * 获取cell object
+     * @Title: getCellIdByLaneLabel
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return ctmCell  返回类型
+     * @throws
+     */
+    @Nullable
+    private static List<int[]> getCellIdByLaneLabel(List<String[]> list) {
+        if (!list.isEmpty()) {
+            List olist = new ArrayList();
+            list.forEach((arrs) -> {
+                if (arrs != null && arrs.length > 0) {
+                    int[] attrs = swCellByLaneArray(arrs);
+                    olist.add(attrs);
+                }
+            });
+            return olist;
+        }
+        return null;
+    }
+    @NotNull
+    private static int[] swCellByLaneArray(String[]  larr){
+        if (larr != null && larr.length > 0) {
+            int[]  c = new int[larr.length];
+            int i = 0;
+            while(i<larr.length){
+                Edge e = initCtm.findEdgByName(constant.ctmls, larr[i]);
+                if(e !=null){
+                    c[i] = (i == 0) ? e.d_cell : e.o_cell;
+                    ++i;
+                }
+            }
+            return c;
+        }
+        return null;
+    }
+    /**
+     * 仿真参数设定
+     * @Title: rest_ctm
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return void   返回类型
+     * @throws
+     */
+    private static void rest_ctm() {
+        /*自由流速度*/
+        double ctm_vf = 15.00;//(m/s);
+        /*激波向后传播速度与自由流速度比值*/
+        double ctm_w_vf = 0.40;//(m/s)
+        /*车辆长度*/
+        double ctm_veh_langth = 7.50;//(m)
+        /*单个元胞单条车道的承载能力*/
+        int ctmCell_n = 20;//(veh)
+        /*元胞长度*/
+        double ctmCell_length = 150.00;
+
+    }
+    /**
+     * 初始化节点相位相位 待完善....
+     * @Title: ctm_set_phase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param: index  节点索引
+     * @param: phi 初始相位
+     * @return void    返回类型
+     * @throws
+     */
+    private static void ctmSetPhase(int index, int phi) {
+        if (index > constant.cints.size()) {
+            System.err.println("Wrong index of intersection");
+        }
+        if (phi < 1 || phi > constant.cints.get(index).phases.size()) {
+            System.err.println("Wrong phase !");
+        }
+        constant.cints.get(index).phase = phi;
+        //初始化第一相位
+        updateNextPhase(index, phi);
+    }
+    /**
+     * 转换相位
+     * @Title: ctm_switch_int
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param : index  节点索引
+     * @return void    返回类型
+     * @throws
+     */
+    public static void ctmSwitchInt(int index) {
+        if (index < 0 || index > constant.cints.size()) {
+            System.err.println("error !");
+        }
+        // 上一相位
+        int phi = constant.cints.get(index).phase;
+        // update before phase
+        updateBeforePhase(index, phi);
+        // update before phase
+        phi = phi + 1;
+        if (phi > constant.cints.get(index).phases.size()) {
+            phi = 1;
+        }
+        // update next phase
+        updateNextPhase(index, phi);
+    }
+    /**
+     * 更新上一相位
+     * @Title: updateBeforePhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param : index  节点索引
+     * @param : phi  上一相位编号
+     * @return void    返回类型
+     * @throws
+     */
+    private static void updateBeforePhase(int index, int phi) {
+        int[] arr = constant.cints.get(index).getPhases().get(phi);
+        int startIndex = arr[0];
+        int toIndex = arr[arr.length -1];
+        while(startIndex<=toIndex){
+            constant.clkts.get(startIndex).k_access = 0;
+            ++startIndex;
+        }
+    }
+    /**
+     * 更新下一相位
+     * @Title: updateNextPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param : index  节点索引
+     * @param : phi  当前相位编号
+     * @return void    返回类型
+     * @throws
+     */
+    private static void updateNextPhase(int index,int phi) {
+        int[] arr = constant.cints.get(index).getPhases().get(phi);
+        int startIndex = arr[0];
+        int toIndex = arr[arr.length - 1];
+        while(startIndex<=toIndex){
+            constant.clkts.get(startIndex).k_access = 1;
+            ++startIndex;
+        }
+        constant.cints.get(index).phase = phi;
+    }
+    /**
+     * 检查路段元胞
+     * @Title: check_ctmCells
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return boolean    返回类型
+     * @throws
+     */
+    private static boolean checkCtmCells() {
+        boolean is_valild = true;
+        if (constant.ctms.size() <= 0 || constant.ctms.size() > constant.ctms.get(0).c_cap) {
+            is_valild = false;
+        }
+        return is_valild;
+    }
+    /**
+     * 检查相位
+     * @Title: ctm_check_phases
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return boolean    返回类型
+     * @throws
+     */
+    private static boolean ctmCheckPhases() {
+        boolean isValild = true;
+        for (int i = 0; i < constant.cints.size(); i++) {
+            if (constant.cints.get(i).phase < 1 ||
+                    constant.cints.get(i).phase > constant.cints.get(i).phases.size()) {
+                    isValild = false;
+                    break;
+            }
+        }
+        return isValild;
+    }
+    /**
+     * 右转相位
+     * @Title: getRightPhase
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param olist 右转相位
+     * @param attr 相位
+     * @return list  返回类型
+     * @throws
+     */
+    private static List getRightPhase(List<int[]> olist, List<int[]> attr) {
+        if(!attr.isEmpty()){
+            List<int[]> ol = new ArrayList<int[]>();
+            olist.forEach((arrs) -> {
+                boolean flag = initCtm.isNoutEquals(attr.get(0), arrs);
+                if (flag) {
+                    ol.add(arrs);
+                }
+            });
+            int i = 0;
+            while (i < ol.size()) {
+                if(attr.size() == 1){
+                    return ol;
+                }
+                boolean fs = initCtm.isEquals(attr.get(1), ol.get(i));
+                if (fs) {
+                    ol.remove(ol.get(i));
+                    continue;
+                }
+                ++i;
+            }
+            return ol;
+        }
+      return null;
+    }
+
+    private static void main(String[] args) {
+//        fileutils.loadJson(cints);
+//        build_ctm_24int(cints);
+        //check_ctmCells();
+       /* intersection ints = new intersection();
+        List<int[]> olist = new ArrayList<>();
+        olist.add(new int[]{259, 212});
+        olist.add(new int[]{518, 181});
+        olist.add(new int[]{170, 176});
+        olist.add(new int[]{163, 188});
+
+
+        List<int[]> attr = new ArrayList<>();
+        attr.add(new int[]{259, 176});
+        attr.add(new int[]{170, 212});
+
+        List ls = new ArrayList<>();
+
+        LinkedHashMap<Integer,int[]> maps = new LinkedHashMap<>();
+        maps.put(1,new int[]{1,2});
+        maps.put(2,new int[]{3,4});
+        maps.put(3,new int[]{4,5});
+        maps.put(4,new int[]{6,7});
+        ls.add(maps);
+
+        ls.forEach((mapss)->{
+            maps.forEach((key, arr)->{
+                System.out.println(key +"_____________"+ArrayUtils.toString(arr));
+            });
+
+        });
+*/
+        int[] p = new int[]{1,2,7,13};
+        System.out.println(Arrays.asList(p).contains(1));
+
+
+
+
+
+    /*    attr.add(new int[]{259, 176});
+        attr.add(new int[]{170, 188});*/
+
+        //setctmCellAndLink(olist,attr,ints);
+        //List  ol = new ArrayList();
+       // List h = getRightPhase(olist,attr);
+        //System.out.println(h);
+        //System.out.println(ArrayUtils.indexOf(olist.get(1),attr.get(0)[1]));
+        /*System.out.println(ArrayUtils.contains(olist.get(0),attr.get(0)[0]));*/
+        //System.out.println(Arrays.equals(new int[]{518,181},new int[]{51,181}));
+
+
+        //set4IntdPhase(olist,attr,ints,4);
+        //System.out.println(searchIndex(attr.get(0),olist.get(1)));
+
+        //set4IntPhase(olist,attr,ints,2);
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package transport.ctm.main;
+
+import transport.ctm.model.ctmCell;
+import transport.ctm.model.ctmLinks;
+import transport.ctm.model.intersection;
+import transport.ctm.util.constant;
+import transport.graph.Edge;
+import transport.graph.Vehicle;
+import transport.math.util.MathHandle;
+
+import java.util.List;
+
+/**
+ * @Title: simulatCtm.java
+ * @Package edu.jiaotong.transport.ctm.main;
+ * @Description: 车流传播
+ * @author liangxiao.zhou
+ * @date Jan 18, 2019 16:11:14 PM
+ * @version V3.0
+ */
+public class simulatCtm {
+    private static final double  ctm_w_vf = 0.40 ;
+    private static int c1,c2,c3;
+    private static double f,f1,f2;
+    private static double b1,b2,b3;
+    private static MathHandle mds = new MathHandle();
+    private static List<ctmCell> ctms = constant.ctms;
+    private static List<ctmLinks> clks = constant.clkts;
+    /**
+     *
+     * 节点、路段模型
+     * @Title: ctmSiulat
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param dt
+     * @return Edge   返回类型
+     * @throws
+     */
+    public static void ctmSimulat(double dt,int step,List<intersection> cints){
+        System.out.println("仿真时步 step :"  +step);
+        if (!ctms.isEmpty()) {
+            ctms.forEach((cc)->{
+                switch(cc.c_type){
+                    case 0:
+                        /*当前元胞的接受量*/
+                        cc.pos_in = Math.min(cc.c_rate*dt,ctm_w_vf*(cc.c_cap-cc.c_n));
+                        /*当前元胞的发送量*/
+                        cc.pos_out =Math.min(cc.c_rate*dt, cc.c_n);
+                        break ;
+                    case 1:
+                        cc.c_n = cc.c_n + cc.c_rate*dt;
+                        cc.pos_in = 0;
+                        cc.pos_out = cc.c_n;
+                        break;
+                    case 2:
+                        cc.pos_in = -1.0;
+                        cc.pos_out = 0.0;
+                        break;
+                }
+            });
+        }
+        for (ctmLinks clk : clks) {
+            if (clk.k_access == 0) {
+                continue;
+            }
+            ctmCell c = null;
+            switch (clk.k_type) {
+                case 0:
+
+                    c1 = clk.getL_cells()[0]; /*车流传递*/
+                    c2 = clk.getL_cells()[1];
+                    if (c2 <= 0) {
+                        System.err.println("error !");
+                    }
+                    ctmCell cc1 = ctms.get(c1);ctmCell cc2 = ctms.get(c2);
+                    f = Math.floor(Math.min(cc1.pos_out, cc2.pos_in));
+                    cc1.real_out = f;
+                    cc2.real_in = f;
+
+                    updateVehicle(cc1, cc2,f);/*更新vehicle object*/
+                    break;
+                case 1:
+                    /*合流*/
+                    c1 = clk.getL_cells()[0];
+                    c2 = clk.getL_cells()[1];
+                    c3 = clk.getL_cells()[2];
+                    b1 = clk.k_p;
+                    b2 = 1 - b1;
+                    ctmCell c11 = ctms.get(c1);ctmCell c21 = ctms.get(c2);ctmCell c31 = ctms.get(c3);
+                    if (c31.pos_in >= c11.pos_out + c21.pos_out) {
+                        f1 = c11.pos_out;
+                        f2 = c21.pos_out;
+                    } else {
+                        f1 = MathHandle.median(c11.pos_out, mds.sub(c31.pos_in, c21.pos_out), b1 * c31.pos_in);
+                        f2 = MathHandle.median(c21.pos_out, mds.sub(c31.pos_in, c11.pos_out), b2 * c31.pos_in);
+                    }
+                    c11.real_out = f1;
+                    c21.real_out = f2;
+                    c31.real_in = f1 + f2;
+                    updateMerVehicle(c11,c21,c31,f1,f2);
+                    break;
+                case 2:
+                    /*分流*/
+                    c1 = clk.getL_cells()[0];
+                    c2 = clk.getL_cells()[1];
+                    c3 = clk.getL_cells()[2];
+                    b1 = clk.k_p;
+                    b2 = 1.0 - b1;
+                    ctmCell c211 = ctms.get(c1);ctmCell c221 = ctms.get(c2);
+                    ctmCell c231 = ctms.get(c3);
+                    if(b1!=0&&b2!=0){
+                        f = Math.floor(mds.medmin(c211.pos_out,mds.div(c221.pos_in,b1) ,mds.div(c231.pos_in,b2)));
+                    }else{
+                        f = Math.floor(Math.min(c211.pos_out,c221.pos_in));
+                    }
+                    f1 = Math.round(f * b1);
+                    f2 = mds.sub(f,f1);
+                    c211.real_out = f;
+                    c221.real_in  = f1;
+                    c231.real_in  = f2;
+                    if(f>0){
+                        updateDiVehicle(c211,c221,c231,f);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        // 更新路段车流
+        ctms.forEach((ctm)->{
+            ctm.c_n = ctm.c_n + ctm.real_in- ctm.real_out;
+            if(ctm.c_type == 1){
+                ctm.setC_rate(0.0);
+            }
+        });
+    }
+
+    /**
+     * 更新路段车流
+     * @param cc1
+     * @param cc2
+     * @param f
+     */
+    private static void updateVehicle(ctmCell cc1, ctmCell cc2,double f) {
+        int N = (int)f;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(cc1.clv.size()>0){
+                Vehicle v = cc1.clv.poll();
+                if(v ==null){
+                    System.out.println(cc1.c_id);
+                }
+                v.setCurCellPosition(cc2.c_id);
+                cc2.clv.offer(v);
+            }
+            startIndex++;
+        }
+    }
+
+    /**
+     * 节点车流(分流)
+     * @param c1
+     * @param c2
+     * @param c3
+     * @param f1
+     * @param f2
+     */
+    private static void updateMerVehicle(ctmCell c1, ctmCell c2, ctmCell c3, double f1, double f2) {
+        if (f1==0 && f2!=0) {
+            updateVehicle(c2,c3,f2);
+        }else if(f1!= 0&&f2==0){
+            updateVehicle(c1, c3, f1);
+        }else if(f1!=0&&f2!=0){
+            updateVehicle(c1,c3,f1);
+            updateVehicle(c2,c3,f2);
+        }
+    }
+    /**
+     * 分流 车辆更新
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateDiVehicle(ctmCell c1, ctmCell c2,ctmCell c3 ,double f) {
+        int N = (int)f;
+        int startIndex = 0;
+        while (startIndex<N){
+            Vehicle v = c1.clv.poll();/*出队*/
+            if(v==null){
+                System.out.println(c1.c_id);
+            }
+            int nextIntoCell = v.getNextIntoCell();
+            if(nextIntoCell==c2.c_id){
+                /*进入相应队列*/
+                c2.clv.offer(v);
+                v.setCurCellPosition(c2.c_id);
+            }else{
+                c3.clv.offer(v);
+                v.setCurCellPosition(c3.c_id);
+            }
+            startIndex++;
+        }
+    }
+}
+
+
+
+  double sum = 0.0 ;
+        double rech = 0.0 ;
+        double incn = 0.0;
+        for (int i = 0; i < ods.length; i++) {
+            double n_v = lg.get(i).getProVeh();
+            rech+= lg.get(i).reachVeh.size();
+            Map<String,List<Vehicle>> vesMap= lg.get(i).vesMap;
+            List<Vehicle> ves = null;
+            for (int j = 0; j < ods.length; j++) {
+                if(i!=j){
+                    ves = (step>loadStep) ? vesMap.get(String.valueOf(i+1)) : new LinkedList<>();
+                    double rate = 1;
+                    DefaultGraphPath dgp = gp[i][j];
+                    DefaultWeightLabelEdge dwle = dgp.ld.get(0);
+                    Edge edge = IniteGraph.getEdgeByLabel(dwle.getLabel());
+                    /*路段输入元胞*/
+                    ctmCell cc = initCtm.getInCell(edge.getInCell());
+                    double cRate = cc.getC_rate();
+                    cRate+=rate;
+                    cc.setC_rate(cRate);
+
+                    Vehicle veh = new Vehicle();
+                    n_v+=rate;
+                    int vl =  ves.size();
+
+                    StringBuilder sb = new StringBuilder();
+                    String vehId = sb.append("v_")
+                            .append(dgp.startVertex)
+                            .append("_")
+                            .append(dgp.endVertex)
+                            .append("_")
+                            .append(String.valueOf(vl)).toString();
+                    veh.setVehId(vehId);
+                    veh.setDefaultGraphPath(dgp);
+                    veh.setCurPosLane(dwle.getLabel());
+                    veh.setCurCellPosition(edge.getInCell());
+
+                    /*车辆入队*/
+                    cc.clv.offer(veh);
+                    ves.add(veh);
+                    vesMap.put(veh.getCurPosLane(),ves);
+
+                    lg.get(i).setIntId(String.valueOf(i+1));
+                    lg.get(i).setProVeh(n_v);
+                    lg.get(i).setVes(vesMap);
+                }
+            }
+            sum+=n_v;
+        }
+        List<Edge> ctmls = constant.ctmls ;
+        for (Edge le : ctmls) {
+            int inc = le.getInCell();
+            ctmCell c = (ctmCell) constant.ctms.get(inc);
+            incn+=c.getClv().size();
+
+        }
+        System.out.println("[CURSTEP："+step+",LOADCARS:"+ sum+", REARCHEDCARS:" +rech+", ROADCARS: "+(sum-rech-incn)+"]");
+
+
+ public static void networkFlowLoading(double tdf,List<Vertex> vertList,int loadStep,int step, List<Garage> lg, int[][] ods, DefaultGraphPath[][] gp) {
+        double sum = 0.0 ;
+        double rech = 0.0 ;
+        double incn = 0.0;
+        for (int i = 0; i < ods.length; i++) {
+            double n_v = lg.get(i).getProVeh();
+            rech+= lg.get(i).reachVeh.size();
+
+            Vertex vertex  =  IniteGraph.getVertexByName(vertList,String.valueOf(i+1));
+            List<String> edgeList = vertex.getEdgList();
+            Map<String,List<Vehicle>> vesMap= lg.get(i).vesMap;
+            edgeList.forEach((el)->{
+                vesMap.put(el, new LinkedList<>());
+            });
+
+            List<Vehicle> ves = null;
+            for (int j = 0; j < ods.length; j++) {
+                if(i!=j){
+                    double rate = 1;
+                    DefaultGraphPath dgp = gp[i][j];
+                    DefaultWeightLabelEdge dwle = dgp.ld.get(0);
+                    Edge edge = IniteGraph.getEdgeByLabel(dwle.getLabel());
+                    /*路段输入元胞*/
+                    ctmCell cc = initCtm.getInCell(edge.getInCell());
+                    double cRate = cc.getC_rate();
+                    cRate+=rate;
+                    cc.setC_rate(cRate);
+
+                    ves = vesMap.get(dwle.getLabel());
+                    Vehicle veh = new Vehicle();
+                    n_v+=rate;
+                    int vl =  ves.size();
+
+                    StringBuilder sb = new StringBuilder();
+                    String vehId = sb.append("v_")
+                            .append(dgp.startVertex)
+                            .append("_")
+                            .append(dgp.endVertex)
+                            .append("_")
+                            .append(String.valueOf(vl)).toString();
+                    veh.setVehId(vehId);
+                    veh.setDefaultGraphPath(dgp);
+                    veh.setCurPosLane(dwle.getLabel());
+                    veh.setCurCellPosition(edge.getInCell());
+
+                    /*车辆入队*/
+                    cc.clv.offer(veh);
+                    ves.add(veh);
+                    vesMap.put(veh.getCurPosLane(),ves);
+
+                    lg.get(i).setIntId(String.valueOf(i+1));
+                    lg.get(i).setProVeh(n_v);
+                    lg.get(i).setVes(vesMap);
+                }
+            }
+            sum+=n_v;
+        }
+        List<Edge> ctmls = constant.ctmls ;
+        for (Edge le : ctmls) {
+            int inc = le.getInCell();
+            ctmCell c = (ctmCell) constant.ctms.get(inc);
+            incn+=c.getClv().size();
+
+        }
+        System.out.println("[CURSTEP："+step+",LOADCARS:"+ sum+", REARCHEDCARS:" +rech+", ROADCARS: "+(sum-rech-incn)+"]");
+    }
+
+    public static Map<String, String> vertexMap = new TreeMap<String, String>(new Comparator<String>(){
+           @Override
+           public int compare(String o1, String o2) {
+               return  Double.valueOf(o1).compareTo(Double.valueOf(o2));
+           }
+    });
+
+
+     private static void setCanalSubCell(String[] vstr, List ctms,
+                                            String l_id,
+                                            int cl_cap,
+                                            int cn,
+                                            int n_cell,
+                                            String[] str) {
+            double c_rate,c_cap;
+            int index = 0, ctype = 3;
+            /*这里采用停止线均衡分配*/
+            double a = 0.5,b = 0.2 ,c = 0.3;
+
+            String l_t = vstr[7];/*路段下游对应交叉口类型*/
+            int l_n =  Integer.parseInt(vstr[4]);/*车道数*/
+            double s_l_c = Double.valueOf(vstr[5]) ;/*单车道通行能力*/
+
+            c_rate = MathSupplier.mul(l_n, s_l_c);
+            c_cap = cl_cap * l_n;
+
+            String drs = setUpEndCellDirect(str);
+            boolean fag =  drs.equals("-1");
+            if (fag) {
+                /*1/2/7/13节点*/
+                /*只有一个车流去向 渠化为一个子元胞*/
+                setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype, drs);
+            }
+            if(!fag){
+                if(l_t.equals("3")){
+                    /*均渠化为2个子元胞*/
+                    int idx = 0;
+                    double lds = 0,ls = 0,rs = 0;
+                    String[] strs = drs.split("&");
+                    int d_gth = strs.length;
+                    while(idx<d_gth){
+                        if(l_n == 1){
+                            /*渠化为2个子元胞且均衡分配停止线宽度*/
+                            c_rate = c_rate/2;
+                            c_cap  = c_cap/2;
+                            setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype, strs[idx]);
+                        }
+                        if(l_n == 2){
+                            /*渠化为2个子元胞*/
+                            lds = (int)(Math.round(MathSupplier.mul(l_n,a)));
+                            c_rate = MathSupplier.mul(lds, s_l_c);
+                            c_cap = cl_cap * lds;
+                            setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype, strs[idx]);
+
+                        }
+                        if(l_n > 2){
+                            /*修正停止线宽度比例*/
+                            if(strs[0].equals("0") &
+                                    strs[1].equals("2")){
+                                /*(S,R)*/
+                                a = 1 - c ;
+                            }
+                            if(strs[0].equals("0") &
+                                    strs[1].equals("1")){
+                                /*(S,L)*/
+                                a = 1 - b ;
+                            }
+                            if(strs[0].equals("1") &
+                                    strs[1].equals("2")){
+                                /*(L,R)*/
+                                b = 1 - c ;
+                            }
+                            int ster = Integer.parseInt(strs[idx]);
+                            if(ster == 0){
+                                /*直行*/
+                                lds = (int)(Math.round(MathSupplier.mul(l_n,a)));
+                                c_rate = MathSupplier.mul(lds, s_l_c);
+                                c_cap = cl_cap * lds;
+
+                            }
+                            if(ster == 1){
+                                /*左转*/
+                                ls = (lds>0) ? l_n - lds : (int)(Math.round(MathSupplier.mul(l_n,b)));
+                                c_rate = MathSupplier.mul(ls, s_l_c);
+                                c_cap = cl_cap * ls;
+
+                            }
+                            if(ster == 2){
+                                /*右转*/
+                                rs = (lds>0) ? l_n - lds : (int)(Math.round(MathSupplier.mul(l_n,c)));
+                                c_rate = MathSupplier.mul(rs, s_l_c);
+                                c_cap = cl_cap * rs;
+                            }
+                            setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype, strs[idx]);
+                        }
+                        ++idx;
+                    }
+                }
+                /*十字形交叉口*/
+                if(l_t.equals("4")){
+                    if (l_n == 2) {
+                        /*混合车道 渠化为3个子元胞 (L,S,R)*/
+                        double ls = l_n/2;
+                        int idx = 0;
+                        while (idx < l_n + 1) {
+                            String ster = "";
+                            if (idx == 0){
+                                ster = "1"; /*左转*/
+                                c_cap = cl_cap * ls;
+                                c_rate = MathSupplier.mul(ls, s_l_c);/*占单车道1/2*/
+                            }
+                            if (idx == 1){
+                                ster = "0"; /*直行*/
+                                c_cap = cl_cap * ls;
+                                c_rate = MathSupplier.mul(l_n, s_l_c);/*占1单车道*/
+                            }
+                            if (idx == 2) {
+                                ster = "2"; /*右转*/
+                                c_cap = cl_cap * ls;
+                                c_rate = MathSupplier.mul(ls, s_l_c);/*占1单车道*/
+                            }
+                            setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype, ster);
+                            ++idx;
+                        }
+                    }
+                    if(l_n == 3){
+                        /*渠化为3个子元胞(L,S,R)*/
+                        int ls = 1;
+                        int idx = 0;
+                        String[] strs = drs.split("&");
+                        while (idx < strs.length) {
+                            String ster = "";
+                            c_cap = cl_cap * ls;
+                            c_rate = MathSupplier.mul(ls, s_l_c);
+                            if (idx == 0) ster = "1"; /*左转*/
+                            if (idx == 1) ster = "0"; /*直行*/
+                            if (idx == 2) ster = "2"; /*右转*/
+                            setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype, ster);
+                            ++idx;
+                        }
+                    }
+                    if(l_n == 4){
+                        /*渠化为3个子元胞(L,S,R) */
+                        int idx = 0;
+                        int ls = 0,lds = 0,rs = 0;
+                        String[] strs = drs.split("&");
+                        while (idx < strs.length) {
+                            c_cap = cl_cap * ls;
+                            c_rate = MathSupplier.mul(ls, s_l_c);
+                            if (idx == 0){
+                                /*左转*/
+                                ls = (int)(Math.round(MathSupplier.mul(l_n,b)));
+                                c_rate = MathSupplier.mul(ls, s_l_c);
+                                c_cap = cl_cap * ls;
+                            }
+                            if (idx == 1){
+                                /*直行*/
+                                lds = (int)(Math.round(MathSupplier.mul(l_n,a)));
+                                c_rate = MathSupplier.mul(lds, s_l_c);
+                                c_cap = cl_cap * lds;
+                            }
+                            if (idx == 2){
+                                /*右转*/
+                                rs = (int)(Math.round(MathSupplier.mul(l_n,c)));
+                                c_rate = MathSupplier.mul(rs, s_l_c);
+                                c_cap = cl_cap * rs;
+                            }
+                            setCanalCell(ctms, l_id, c_rate, c_cap, ctms.size(), ctype,  strs[idx]);
+                            ++idx;
+                        }
+                    }
+                }
+            }
+        }

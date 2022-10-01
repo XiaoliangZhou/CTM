@@ -1,0 +1,66 @@
+  public static double getSingelDelay(List ctms , Edge e, intersection intsect){
+        /*优化信号交叉口*/
+        String vertex = "10";
+        double eDelay=0;
+        String endVertex = e.getEndVertex().getLabel();
+
+        if(endVertex.equals(vertex)){
+            /*该交叉口进口道*/
+            int dt=5;
+            int sec;
+            ctmCell ctc;
+            endCell edc;
+            secCell stc;
+
+            /**/
+            ctc = initCtm.getOrginCell(ctms,e.getoCell());
+
+            Iterator<Vehicle> it = ctc.getC1().iterator();
+            ArrayDeque<Vehicle> ardque = new ArrayDeque<>();
+            while (it.hasNext()){
+                Vehicle v = it.next();
+                List<DefaultWeightLabelEdge> listr ;
+                Iterator<DefaultWeightLabelEdge> its = v.getDefaultGraphPath().getPaths().iterator();
+                listr = new LinkedList<>();
+                while (its.hasNext()){
+                    DefaultWeightLabelEdge rde = its.next();
+                    if(rde.getLabel().equals(v.getCurPosLane())){
+                        if(its.hasNext()){
+                            listr.add(its.next());
+                        }
+                    }
+                }
+                int sizes = listr.size();
+                if(sizes==1){
+                    String[] d = new String[]{v.getCurPosLane(),listr.get(0).getLabel()};
+                    String ster = stmSim.getCarSteer(d);
+                    if(!ster.equals("2")){
+                        ardque.offer(v);
+                    }
+                }
+            }
+            ctc.real_in = roude(div(ardque.size(),dt));
+            /*更新元胞流量*/
+            ctc.c_n = ardque.size();
+            ctc.setC1(ardque);
+
+
+            double c=0;
+
+
+            for (Integer cid : e.getDcMap().values()) {
+                edc = initCtm.getEndCell(ctms, cid);
+                if(!edc.getC_dir().equals("2")){
+                    /*右转车流不受限制*/
+                     c = edc.getC2().size() - (int)mul(edc.real_out,dt);
+                     if(c>0){
+                         System.out.println();
+                     }
+                     eDelay += c;
+                }
+            }
+
+        }
+        return eDelay;
+
+    }

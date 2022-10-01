@@ -1,0 +1,259 @@
+/**
+     * @param step
+     * @param e
+     */
+    public static int getRoadAvg(int step, Edge e, int count) {
+        int s1 = 1;
+        int s2 = 200;
+        double T, length, v1;
+        double jam = 0.2000, k, k0, k1;
+        double tra = 0.0, tra1 = 0, freeTime;
+        int t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        double avg = 0.0, freeAvg = 50.0, avg0 = 0;
+        double l_a = 70;
+        double d_l_a = 80;
+
+        double tt = 0.0;
+
+        int sec;
+        ctmCell ctc;
+        endCell edc;
+        secCell stc;
+        ArrayDeque<Vehicle> dq;
+
+        sec = Math.addExact(e.getInCell(), e.getCellNum()) - 1;
+        stc = initCtm.getSecCell(ctms, sec);
+
+        int startIndex, toIndex;
+        toIndex = sec;
+        startIndex = e.getoCell();
+
+        /*路段的阻塞密度*/
+        jam = mul(jam, e.getRoadNum());
+
+        int n3 = 0, n84 = 0, nd = 0;
+        /*统计车流转向*/
+        Map<Integer,Double> steermaps =e.getSteerMaps();
+        List<String> tagets = new ArrayList<>();
+        while (startIndex <= toIndex) {
+            ctc = (ctmCell) ctms.get(startIndex);
+            tt = ctc.getC_n();
+
+            if (e.getLabel().equals("14") & (step >= s1 & step <= s2)) {
+                Iterator<Vehicle> it = ctc.getC1().iterator();
+                while (it.hasNext()) {
+                    Vehicle v = it.next();
+                    DefaultGraphPath dpath = v.getDefaultGraphPath();
+                    if (dpath.getEndVertex().equals("2")) {
+                        nd++;
+                        steermaps.put(0,steermaps.get(0)+1);
+                    } else if (dpath.getEndVertex().equals("27")) {
+                        n84++;
+                        steermaps.put(2,steermaps.get(2)+1);
+                    } else if (dpath.getEndVertex().equals("1")) {
+                        n3++;
+                        steermaps.put(1,steermaps.get(1)+1);
+                        String dis = dpath.getStartVertex()+"-"+dpath.getEndVertex();
+                        tagets.add(dis);
+                    } else {
+                        LinkedList<DefaultWeightLabelEdge> dls = v.getDefaultGraphPath().getPaths();
+                        for (DefaultWeightLabelEdge dl : dls) {
+                            if (dl.getSource().equals("2") &dl.getTarget().equals("1")) {
+                                if(dl.getTarget().equals("1")){
+                                    n3++;
+                                    steermaps.put(1,steermaps.get(1)+1);
+                                }
+                                if(dl.getTarget().equals("27")){
+                                    n84++;
+                                    steermaps.put(2,steermaps.get(2)+1);
+                                }
+                                String dis = dpath.getStartVertex()+"-"+dpath.getEndVertex();
+                                tagets.add(dis);
+                            }
+                        }
+                    }
+
+                    //System.out.println(v.getVehId() + "  "+v.getDefaultGraphPath().weight +"  "+v.getDefaultGraphPath());
+                }
+            }
+
+            t1 += tt;
+            ++startIndex;
+        }
+
+        for (Integer cid : e.getDcMap().values()) {
+            edc = initCtm.getEndCell(ctms, cid);
+            t3 += edc.getC_n();
+
+           if (e.getLabel().equals("14") & (step >= s1 & step <= s2)) {
+                Iterator<Vehicle> it = edc.getC1().iterator();
+                while (it.hasNext()) {
+                    Vehicle v = it.next();
+                    DefaultGraphPath dpath = v.getDefaultGraphPath();
+                    if (dpath.getEndVertex().equals("2")) {
+                        nd++;
+                        steermaps.put(0,steermaps.get(0)+1);
+                    } else if (dpath.getEndVertex().equals("27")) {
+                        n84++;
+                        steermaps.put(2,steermaps.get(2)+1);
+                    } else if (dpath.getEndVertex().equals("1")) {
+                        n3++;
+                        steermaps.put(1,steermaps.get(1)+1);
+                        String dis = dpath.getStartVertex()+"-"+dpath.getEndVertex();
+                        tagets.add(dis);
+                    } else {
+                        LinkedList<DefaultWeightLabelEdge> dls = v.getDefaultGraphPath().getPaths();
+                        for (DefaultWeightLabelEdge dl : dls) {
+                            if (dl.getSource().equals("2") & dl.getTarget().equals("1")) {
+                                if(dl.getTarget().equals("1")){
+                                    n3++;
+                                    steermaps.put(1,steermaps.get(1)+1);
+                                }
+                                if(dl.getTarget().equals("27")){
+                                    n84++;
+                                    steermaps.put(2,steermaps.get(2)+1);
+                                }
+                                String dis = dpath.getStartVertex()+"-"+dpath.getEndVertex();
+                                tagets.add(dis);
+                            }
+                        }
+                    }
+                }
+            }
+            if (e.getLabel().equals("14") & (step >= s1 & step <= s2)) {
+                Iterator<Vehicle> it = edc.getC2().iterator();
+                while (it.hasNext()) {
+                    Vehicle v = it.next();
+                    DefaultGraphPath dpath = v.getDefaultGraphPath();
+                    if (dpath.getEndVertex().equals("2")) {
+                        nd++;
+                        steermaps.put(0,steermaps.get(0)+1);
+                    } else if (dpath.getEndVertex().equals("27")) {
+                        n84++;
+                        steermaps.put(2,steermaps.get(2)+1);
+                    } else if (dpath.getEndVertex().equals("1")) {
+                        n3++;
+                        steermaps.put(1,steermaps.get(1)+1);
+                        String dis = dpath.getStartVertex()+"-"+dpath.getEndVertex();
+                        tagets.add(dis);
+                    } else {
+                        LinkedList<DefaultWeightLabelEdge> dls = v.getDefaultGraphPath().getPaths();
+                        for (DefaultWeightLabelEdge dl : dls) {
+                            if (dl.getSource().equals("2") & dl.getTarget().equals("1")) {
+                                if(dl.getTarget().equals("1")){
+                                    n3++;
+                                    steermaps.put(1,steermaps.get(1)+1);
+                                }
+                                if(dl.getTarget().equals("27")){
+                                    n84++;
+                                    steermaps.put(2,steermaps.get(2)+1);
+                                }
+                                String dis = dpath.getStartVertex()+"-"+dpath.getEndVertex();
+                                tagets.add(dis);
+                            }
+                        }
+                    }
+
+
+                }
+            }
+        }
+        if (e.getLabel().equals("14") & (step >= s1 & step <= s2)) {
+            System.out.println(step + "  " + n3 + "  " + n84 + "  " + nd + "  " + (t1 + t3)+" "+tagets.toString() );
+        }
+
+
+        /*终点车辆*/
+        dq = e.getRamp().getRque();
+        t4 = dq.size();
+        if (t4 > 0) {
+            dq.clear();
+        }
+
+        T = t1 + t3; /*路段总车辆数*/
+        count += T;
+
+        length = (e.getCellNum() - 1) * l_a + d_l_a;/*路段长度*/
+        k = MathSupplier.div(T, length);
+        double k_limt = mul(0.4, jam);
+        if (k < k_limt) {
+            //tra1 = mul(e.getFreeTime(),Math.pow(Math.E,div(k,jam)));
+            tra = mul(e.getFreeTime(), div(jam, jam - k));
+        } else {
+            tra = div(mul(2.0, e.getFreeTime()), Math.log(div(jam, k)));
+        }
+        e.setWeight(tra);/*路段阻抗*/
+
+
+        double trvTime;
+        if (e.getVehNumber() > 0) {
+            trvTime = div(e.getTotalTime(), e.getVehNumber());
+        } else {
+            if (T == 0) {
+                trvTime = e.getFreeTime();
+            } else {
+                trvTime = Math.max(e.getFreeTime(), e.getWeight());
+            }
+
+        }
+       /* if(e.getLabel().equals("83")){
+            System.out.println(T + "  "+step+"  "+e.getLabel()+"  "+tra +"  "+ tra1+"  " +trvTime);
+        }*/
+        //System.out.println(step+"  "+e.getLabel()+"  "+tra +"  "+trvTime);
+        if (T == 0) {
+            /*自由流时间*/
+            g.setEdgeWeight(e.getSourceVertex(), e.getEndVertex().label, tra);
+        }
+        if (T > 0) {
+            g.setEdgeWeight(e.getSourceVertex(), e.getEndVertex().label, tra);
+
+        }
+        //e.setWeight(trvTime);/*路段阻抗*/
+        //System.out.println(nt +"------------"+tra);
+        if (step % 10 == 0) {
+            //System.out.println(tra +"-----"+nt);
+            //System.out.println("-------------------"+step +"-----------------------");
+            //System.out.print("road"+e.getLabel()+" : "+ T);
+            //System.out.println("\r\n");
+
+        }
+      /*  if(e.getLabel().equals("24")){
+            System.out.println("[" + "当前时段："+step+
+                                    "车辆数："+T+" ,尾元胞车辆数:"+t3 +" ,路段元胞车辆数:"+t1);
+        }*/
+
+        if (k < k_limt) {
+            avg = mul(freeAvg, sub(1, div(k, jam)));/*路段平均行程速度*/
+        } else {
+            avg = mul(div(freeAvg, 2), Math.log(div(jam, k)));
+        }
+        double v0 = e.getTempAvg();
+        v0 += avg;
+        e.setTempAvg(v0);
+/*
+        double avg1;
+        double l1 = MathSupplier.div(length, 1000);
+        double tss = MathSupplier.div(e.getTotalTime(),360);
+        if(tss==0){
+            avg1 = freeAvg;
+        }else{
+            avg1 = MathSupplier.div(mul(l1,e.getVehNumber()),tss);
+        }
+        e.setVehNumber(0.0);
+        e.setTotalTime(0.0);*/
+
+        /*考察时间段内路段平均速度 线性密度模型*/
+        if (step >= s1 & step <= s2) {
+            /*平均行程速度*/
+            e.setPeriodAvg(e.getPeriodAvg() + tra);
+
+        }
+        /*考察时间段内路段平均速度 本文改进模型*/
+      /*  if (step >= s1 & step <= s2) {
+            double v0 = e.getTempAvg();
+            v0 += avg;
+            e.setTempAvg(v0);
+        }*/
+
+        return count;
+    }

@@ -1,0 +1,2293 @@
+private static int[] swCellByLaneArray(String[] lar){
+        int lrth = lar.length;
+        boolean checkNull = lar != null && lrth > 0 ;
+        if (checkNull) {
+            Edge  e;
+            int index = 0;
+            int[] c = new int[lrth];
+            String[] drs = new String[lrth];
+            List<Edge> olist = new ArrayList<>();
+            while(index < lrth){
+                e = initCtm.findEdgByName(constant.ctmls, lar[index]);
+                drs[index] = e.getDirect();
+                olist.add(e);
+                index++;
+            }
+            int steer = getDirect(drs);/*获取转向 (S,0)/(L,1)/(R,2)*/
+            int idx = 0;
+            while (idx<olist.size()){
+                e = olist.get(idx);
+                int intType = parseInt(e.getIntType());
+                if(idx==0){
+                    int rum = e.getRoadNum();
+                    Map<String, Integer>  dMaps = e.getDcMap();
+                    if(intType == 2) c[idx] = dMaps.get("-1");
+                    if(intType == 3){
+                        /*T 型交叉口*/
+                        if(rum == 1) {
+                            dMaps.forEach((k,v)->{
+                                c[0]= v;
+                            });
+                        }
+                        if(rum >= 2) c[idx] = dMaps.get(String.valueOf(steer));
+                    }
+                    if(intType == 4){
+                        /*十字型交叉口*/
+                        if(rum == 1) c[idx] = dMaps.get("1&0&2");
+                        if(rum == 2){
+                            /*左转渠化为1个元胞，直行+右转渠化为一个元胞(L,S&R)*/
+                            if(steer==1) c[idx] = dMaps.get("1");  /*左转*/
+                            if(steer==0||steer==2) c[idx] = dMaps.get("0&2"); /*直行+右转*/
+                        }
+                        if(rum >= 3) {
+                            c[idx] = dMaps.get(String.valueOf(steer)); /*左转/直行/右转均渠化为1个元胞(L,S,R)*/
+                        }
+                    }
+                }
+                if(idx==1) c[idx] = e.getoCell();
+                idx++;
+            }
+            return c;
+        }
+        return null;
+    }
+
+
+   /* private static int[] swCellByLaneArray(String[]  larr){
+        if (larr != null && larr.length > 0) {
+            Edge  e;
+            int[] c = new int[larr.length];
+            int index = 0;
+            String[] drs = new String[larr.length];
+            List<Edge> olist = new ArrayList<>();
+            while(index < larr.length){
+                e = initCtm.findEdgByName(constant.ctmls, larr[index]);
+                drs[index] = e.getDirect();
+                olist.add(e);
+                index++;
+            }
+            int steer = getDirect(drs);*//*获取转向 (S,0)/(L,1)/(R,2)*//*
+            int idx = 0;
+            while (idx<olist.size()){
+                e = olist.get(idx);
+                boolean fag = (e.getIntType().equals("2"));
+                if(steer==0&idx==0){
+                    c[idx] = e.getDcMap().get(0);
+
+                }
+                if(steer==1&idx==0){
+                    if(fag) c[idx] = e.getDcMap().get("-1");
+
+                    if(!fag){
+                        if(e.getDcMap().get(1)==null){
+                            System.out.println(e);
+                        }
+                        c[idx] = e.getDcMap().get("1");
+                    }
+                }
+                if(steer==2&idx==0){
+                    *//*交叉口 1/3/7/13 *//*
+                    if(fag) c[idx] = e.getDcMap().get("-1");
+                    if(!fag) c[idx] = e.getDcMap().get("2"); *//*十字型交叉口 *//*
+                }
+                if(idx==1) c[idx] = e.getoCell();
+                idx++;
+            }
+            return c;
+        }
+        return null;
+    }*/
+
+      Canal cal = new Canal();
+                                if(c211.getClv().size()>0){
+                                    /*获取车辆转向*/
+                                    Iterator<Vehicle> it = c211.getClv().iterator();
+                                    String[] labl ;
+                                    while (it.hasNext()){
+                                       Vehicle v = it.next();
+                                       String curRoadLabel = v.getCurPosLane();
+                                       LinkedList<DefaultWeightLabelEdge> listr = v.getDefaultGraphPath().getPaths();/*车辆路径*/
+                                       int nextIndex = 0;
+                                       String ster = "";
+                                       String nextRoadLabel = "";
+                                       int size = listr.size();
+                                       for (int i = 0; i < listr.size(); i++) {
+                                            if(listr.get(i).getLabel().equals(curRoadLabel)){
+                                                nextIndex = i + 1;
+                                            }
+                                       }
+                                       if(nextIndex < size){
+                                           DefaultWeightLabelEdge dwles = listr.get(nextIndex);
+                                           nextRoadLabel = dwles.getLabel();
+                                           labl = new String[]{curRoadLabel,nextRoadLabel};
+                                           ster = getCarSteer(labl);
+                                           v.setSteer(ster); /*获取转向*/
+                                       }
+                                       if(nextIndex >= size){
+                                           ster = "3";
+                                           v.setReach(true); /*车辆到达终点*/
+                                           v.setSteer("3");
+                                       }
+                                       cal.setT_n(c211.getClv().size());
+                                       if(ster.equals("0")) cal.s_n+=1;
+                                       if(ster.equals("1")) cal.l_n+=1;
+                                       if(ster.equals("2")) cal.r_n+=1;
+                                       if(ster.equals("3")) cal.d_n+=1;
+                                    }
+                                    String d1,d2;
+                                    double s_n,l_n ;
+                                    d1 = c221.getC_dir();d2 = c231.getC_dir();
+                                    if (d1.equals("0") & (d2.equals("2")|| d2.equals("1"))) {
+                                        /*(S,R)/(S,L)*/
+                                        s_n = MathSupplier.div(cal.getS_n(), cal.getT_n());
+                                        clk.setKp(new double[]{s_n, 1 - s_n});
+
+                                    }
+                                    if (d1.equals("1") & d2.equals("2")) {
+                                        /*(L,R)*/
+                                        l_n = MathSupplier.div(cal.getS_n(), cal.getT_n());
+                                        clk.setKp(new double[]{l_n, 1 - l_n});
+                                    }
+                                }
+
+   case 3:
+                        /*当前元胞的接受量*/
+                        cc.pos_in = min(cc.c_rate * dt, ctm_w_vf * (cc.c_cap - cc.c_n));
+                        /*当前元胞的发送量*/
+                        cc.pos_out = min(cc.c_rate * dt, ((endCell) cc).cur_alow_out);
+
+                        cc.real_in = 0.0;
+                        cc.real_out = 0.0;
+                        break;
+
+  /**                                                            C2(内部元胞)
+      *     (S,R)                 (L,R)         (S,L)               /
+      * C1--->--C3(内部元胞)     C2   C3      C2<-----C1           / (L,R)
+      *       \                   \  /               /           C1\
+      *        \                   \/              C3(内部元胞)      \
+      *         C2                 C1              /                 C3(内部元胞)
+      * 分流 车辆更新
+      * @param c1
+      * @param c2
+      * @param c3
+      * @param steer
+      * @param f1
+      * @param f2
+      */
+     private static void updateDiVehicle(endCell c1,
+                                         ctmCell c2,
+                                         ctmCell c3,
+                                         String[] steer, double f1, double f2) {
+         double TT =0.0;
+         int N1 = (int)f1,N2 = (int)f2,N3=0;
+         int idx0 = 0,idx1 = 0 ;
+         Canal cal = c1.getCanal();
+         /*移除终点车辆*/
+       /*  ArrayDeque<Vehicle> dq0 = c1.getQueMap().get("D");
+         if(dq0!=null){
+             N3 = dq0.size();
+             TT = vehReachGarage(TT,c1,cal,dq0);
+         }
+ */
+         Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+         while(it.hasNext()){
+             Map.Entry entry = it.next();
+             String k = (String)entry.getKey();
+             ArrayDeque<Vehicle> dq1 = (ArrayDeque<Vehicle>) entry.getValue(); /*排队车辆*/
+             if(dq1.size()>0){
+                 if(steer!=null&&steer.length==2){
+                     if(k.equals(steer[0])){
+                         while(idx0<N1){
+                             TT = offerQueue(TT,cal,c2,dq1);
+                             idx0++;
+                         }
+                     }
+                     if(k.equals(steer[1])){
+                         while(idx1<N2){
+                             TT = offerQueue(TT,cal,c3, dq1);
+                             idx1++;
+                         }
+                     }
+                 }
+             }
+             if(dq1.size()==0) it.remove();
+         }
+         Edge edge;
+        /* edge = initCtm.getEdgeByEndCell(c1);
+         int N = N1 + N2 + N3;
+         if(N> 0) {
+             edge.setTravleTime(MathSupplier.div(TT,N));*//*路段平均行程时间*//*
+             //edge.setWeight(edge.getTravleTime());
+         }*/
+     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package transport.ctm.main;
+
+import org.apache.commons.lang3.StringUtils;
+import transport.ctm.model.*;
+import transport.ctm.util.constant;
+import transport.graph.*;
+import transport.math.util.MathSupplier;
+
+import javax.swing.text.html.parser.Entity;
+import java.math.BigDecimal;
+import java.util.*;
+
+/**
+ * @Title: simulatCtm.java
+ * @Package edu.jiaotong.transport.ctm.main;
+ * @Description: 车流传播
+ * @author liangxiao.zhou
+ * @date Jan 18, 2019 16:11:14 PM
+ * @version V3.0
+ */
+public class simulatCtm {
+    // 默认除法运算精度
+    private static final int DEF_DIV_SCALE = 10;
+    private static final int DEFAUTL_SCALE = 3;
+    private static final double  ctm_w_vf = 0.40 ;
+    private static int c1,c2,c3,c4;
+    private static double fmin,f,f1,f2,f3,f4,dt=1.0;
+    private static double b1,b2,b3,b4;
+    private static List<ctmCell> ctms = constant.ctms;
+    private static List<ctmLinks> clks = constant.clks;
+    public static List<Garage> lgs = constant.lg;
+    private static List<Edge> ctmls = constant.ctmls;
+
+    private  static int curStep;
+    /**
+     *
+     * 节点、路段模型
+     * @Title: ctmSiulat
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return Edge   返回类型
+     * @throws
+     */
+    public static void ctmSimulat(int step){
+        curStep=step;
+        if (!ctms.isEmpty()) {
+            ctms.forEach((cc)->{
+                switch(cc.c_type){
+                    case 0: case 2:case 3 :case 4 :
+                        /*当前元胞的接受量*/
+                        cc.pos_in = floor(min(cc.c_rate*dt,ctm_w_vf*(cc.c_cap-cc.c_n)));
+                        /*当前元胞的发送量*/
+                        cc.pos_out =floor(min(cc.c_rate*dt, cc.c_n));
+
+                        cc.real_in = 0.0;
+                        cc.real_out = 0.0;
+                        cc.f_l_in = 0.0;
+                        break ;
+                    case 1:
+                        cc.c_n = cc.c_n + cc.c_rate*dt;
+                        cc.pos_in = 0;
+                        cc.pos_out = cc.c_n;
+
+                        cc.real_in = 0.0;
+                        cc.real_out = 0.0;
+                        break;
+                }
+            });
+        }
+        for (ctmLinks clk : clks) {
+            if (clk.getAccess() == 0) {
+                continue;
+            }
+            switch (clk.getType()) {
+                case 0:case 3:
+                    c1 = clk.getCells()[0]; /*车流传递*/
+                    c2 = clk.getCells()[1];
+                    if (c2 <= 0) {
+                        System.err.println("error !");
+                    }
+                    ctmCell cc1 = ctms.get(c1);
+                    ctmCell cc2 = ctms.get(c2);
+                    f = floor(min(cc1.pos_out, cc2.pos_in));
+                    cc1.real_out = f;
+                    cc2.real_in = f + cc2.f_l_in;
+
+                    if(f>0){
+                        updateRoadVehicle(cc1, cc2,f);/*更新vehicle object*/
+                    }
+                    break;
+                case 1:
+                    /*合流*/
+                    c1 = clk.getCells()[0];
+                    c2 = clk.getCells()[1];
+                    c3 = clk.getCells()[2];
+                    b1 = clk.getKp()[0];
+                    b2 = clk.getKp()[1];
+
+                    ctmCell c11 = ctms.get(c1);
+                    ctmCell c21 = getCtmCell(clk);
+                    ctmCell c31 = ctms.get(c3);
+
+                    if (c31.pos_in >= c11.pos_out + c21.pos_out) {
+                        f1 = c11.pos_out;
+                        f2 = c21.pos_out;
+                    } else {
+                        f1 = median(c11.pos_out, sub(c31.pos_in, c21.pos_out), b1 * c31.pos_in);
+                        /*f2 = median(c21.pos_out, sub(c31.pos_in, c11.pos_out), b2 * c31.pos_in);*/
+                        f1 = round(f1);
+                        f2 = sub(c31.pos_in, f1);
+                    }
+                    c11.real_out = f1;
+                    c21.real_out = f2;
+                    c31.real_in = f1 + f2;
+
+                    c31.f_l_in = f1 + f2;
+
+                    //updateRightFlow(c31);
+                    //updateMerVehicle(c11,c21,c31,clk,f1,f2);
+                    break;
+                case 2:/*分流*/
+                    int length = clk.getCells().length;
+                    switch (length){
+                        case 2:
+                            c1 = clk.getCells()[0];
+                            c2 = clk.getCells()[1];
+                            if(clk.getFlag()==1){
+                                /*单车道分流*/
+                                secCell r1 = initCtm.getSecCell(ctms,c1);
+                                endCell r2 = (endCell) ctms.get(c2);
+                                f = floor(min(r1.pos_out, r2.pos_in));
+
+                                r1.real_out = f;
+                                r2.real_in = f ;
+                                r2.f_l_in = f;
+
+                                /*右转车流*/
+                                if(f>0){
+                                    updateSingleLaneVehicle(r1, r2,f);/*更新vehicle object*/
+                                }
+                            }else{
+                                /*处理右转 、左转相位*/
+                                b1 = clk.getKp()[0];
+                                endCell r1 = initCtm.getEndCell(ctms,c1);
+                                ctmCell r2 = ctms.get(c2);
+                                f = floor(min(r1.pos_out, r2.pos_in));
+                                r1.real_out = f;
+                                r2.real_in = f ;
+                                r2.f_l_in = f;
+
+                                /*右转车流*/
+                                updateRightFlow(r2);
+                                if(f>0){
+                                    updateRightVehicle(r1, r2,f);/*更新vehicle object*/
+                                }
+                            }
+                            break;
+                        case 3:
+                            c1 = clk.getCells()[0];
+                            c2 = clk.getCells()[1];
+                            c3 = clk.getCells()[2];
+                            b1 = clk.getKp()[0];
+                            b2 = clk.getKp()[1];
+                            b3 = sub(1.0,add(b1,b2));/*终点车辆*/
+                            secCell c211 = (secCell) ctms.get(c1);
+                            endCell c221 = (endCell) ctms.get(c2);
+                            endCell c231 = (endCell) ctms.get(c3);
+
+                            if(b1!=0&&b2!=0){
+                                f = floor(medmin(c211.pos_out, div(c221.pos_in,b1),div(c231.pos_in,b2)));
+                            }
+                            if(b1==0){
+                                f = floor(min(c211.pos_out,c231.pos_in));
+                            }
+                            if(b2==0){
+                                f = floor(min(c211.pos_out,c221.pos_in));
+                            }
+                            f1 = round(f * b1);
+                            f2 = round(f * b2);
+                            f3 = sub(f,(f1+f2));
+                            if(c211.getQueMap().get("3")!=null){
+                                if(f3>c211.getQueMap().get("3").size()){
+                                    System.out.println();
+                                }
+                            }
+                            c211.getQueMap().get("3");
+
+                            c211.real_out = f;
+                            c221.real_in  = f1;
+                            c231.real_in  = f2;
+
+                            /*车辆传播*/
+                            if(f>0){
+                                updateDiVehicle1(c211,c221,c231,f1,f2,f3);
+                            }
+                            break;
+                        case 4:
+                            /*十字型交叉口*/
+                            c1 = clk.getCells()[0];
+                            c2 = clk.getCells()[1];
+                            c3 = clk.getCells()[2];
+                            c4 = clk.getCells()[3];
+                            b1 = clk.getKp()[0];/*左转*/
+                            b2 = clk.getKp()[1];/*直行*/
+                            b3 = clk.getKp()[2];/*右转*/
+                            b4 = sub(1.0,add(b1,add(b2,b3)));/*终点车辆比例*/
+
+                            secCell c41 = (secCell) ctms.get(c1);
+                            endCell c42 = (endCell) ctms.get(c2);
+                            endCell c43 = (endCell) ctms.get(c3);
+                            endCell c44 = (endCell) ctms.get(c4);
+                            if(b1+b2+b3==0){
+                                f=0;
+                            }
+                            if(b1+b2+b4==0|| b1+b2==0&b3>0){
+                                f = floor(min(c41.pos_out,div(c44.pos_in,b3)));
+                            }
+                            if(b1+b3+b4==0 ||b1+b3==0&b2>0){
+                                f = floor(min(c41.pos_out,div(c43.pos_in,b2)));
+                            }
+                            if(b2+b3+b4==0 || b2+b3==0&b1>0){
+                                f = floor(min(c41.pos_out,div(c42.pos_in,b1)));
+                            }
+                            if(b3+b4==0&b1>0&b2>0 || b1>0&b2>0&b4>0&b3==0){
+                                f = floor(medmin(c41.pos_out,div(c42.pos_in,b1),div(c43.pos_in,b2)));
+                            }
+                            if(b2+b4==0&b1>0&b3>0 || b1>0&b3>0&b4>0&b2==0){
+                                f = floor(medmin(c41.pos_out,div(c42.pos_in,b1),div(c44.pos_in,b3)));
+                            }
+                            if(b1+b4==0&b2>0&b3>0 || b2>0&b3>0&b4>0&b1==0){
+                                f = floor(medmin(c41.pos_out,div(c43.pos_in,b2),div(c44.pos_in,b3)));
+                            }
+                            if(b1>0&b2>0&b3>0&b4==0){
+                                fmin = medmin(div(c42.pos_in,b1),div(c43.pos_in,b2),div(c44.pos_in,b3));
+                                f = min(c41.pos_out,fmin);
+                            }
+                            f1 = round(f * b1);
+                            f2 = round(f * b2);
+                            f3 = round(f * b3);
+                            f4 = sub(f, (f1 + f2+ f3));
+
+                            c41.real_out = f;
+                            c42.real_in  = f1;
+                            c43.real_in  = f2;
+                            c44.real_in  = f3;
+
+                            /*车辆传播*/
+                            if(f>0){
+                                updateTTOfDivVehicle(c41,c42,c43,c44,f1,f2,f3,f4);
+                            }
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        /*更新路段车流*/
+        ctms.forEach((ctm)->{
+            ctm.c_n = ctm.c_n + ctm.real_in- ctm.real_out;
+            if(ctm.c_type!=3){
+                if(ctm.c_n!=ctm.getC1().size()){
+                    System.out.println(" [CURSTEP:"+ step + ", ERROR CID:" + ctm.c_id +"]");
+                }
+            }
+            if(ctm.c_type == 1) ctm.setC_rate(0.0);
+        });
+    }
+
+    /**
+     *   节点合流 获取C1 或者 C2
+     *    C3----> -->---C2
+     *         /
+     *      C1/(R C1 路段首元胞)
+     *
+     *        |
+     *        C3(路段起始元胞)
+     *       / \
+     *      /   C2(内部元胞)
+     *     C1(内部元胞)
+     *
+     * @param clk
+     * @return
+     */
+    protected static ctmCell getCtmCell(ctmLinks clk) {
+        boolean fag = clk.getIntType()==4&&(clk.getCurPhase() == 2||clk.getCurPhase() == 4);
+        ctmCell  c21 = null ;
+        if(fag)  c21 = ctms.get(c2);
+        if(!fag) c21 = initCtm.getEndCell(ctms,c2);
+        return c21;
+    }
+
+    /**    1    O2(节点)
+     * O--->--\ |
+     *         \| 2
+     *         O1
+     * 上游路段进入节点的车辆优先进入路段首元胞1->2
+     * 重新更新首元胞流入量
+     * @param clk 节点元胞链接
+     * @param c2 首元胞1
+     * @param c3
+     */
+    private static void updateDivFlow(ctmLinks clk, ctmCell c2, ctmCell c3) {
+        int ckType = clk.getType();
+        int ckPhase = clk.getCurPhase();
+        if(ckType==3){
+            if(ckPhase==1) updateRightFlow(c3);
+            if(ckPhase==2) updateRightFlow(c2);
+            if(ckPhase==3) updateRightFlow(c2);updateRightFlow(c3);
+        }
+        if(ckType==4){
+            if(ckPhase==1||ckPhase==3) updateRightFlow(c3);
+        }
+    }
+    /**
+     *        O2(节点产生车辆)
+     *        |
+     *        2
+     *        |
+     * O--1----
+     *         \
+     *          \
+     *           O1
+     * 更新路段首元胞O1可允许流入量1——>2
+     * @param cc
+     */
+    private static void updateRightFlow(ctmCell cc) {
+        double posCn = cc.c_n + cc.real_in;
+        cc.pos_in = Math.floor(Math.min(cc.c_rate*dt,ctm_w_vf*(cc.c_cap-posCn)));
+    }
+    /**
+     *
+     *    C3----> -->---C2
+     *         /
+     *      C1/(R C1 路段首元胞)
+     * 交叉口合流更新右转车流
+     * @param c1
+     * @param c2
+     * @param steer
+     * @param f
+     */
+    private static void updateMerRightVehicle(endCell c1, ctmCell c2,String[] steer,double f) {
+        int N1 = (int)f,N2=0;
+        double TT = 0.0;
+        int idx0 = 0;
+        Canal cal = c1.getCanal();
+
+        /*移除终点车辆*/
+        ArrayDeque<Vehicle> dq0 = c1.getQueMap().get("D");
+        if(dq0!=null){
+            N2 = dq0.size();
+            TT = vehReachGarage(TT,c1,cal,dq0);
+        }
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq = (ArrayDeque<Vehicle>) entry.getValue();
+            if(dq.size()>0){
+                if(k.equals(steer[1])){
+                    while(idx0<N1){
+                        TT = offerQueue(TT,cal,c2,dq);
+                        idx0++;
+                    }
+                }
+            }
+            if(dq.size()==0) it.remove();
+        }
+        Edge edge;
+        edge = initCtm.getEdgeByEndCell(c1);
+        int N = N1+N2;
+        if(N> 0)  edge.setTravleTime(MathSupplier.div(TT,N));/*路段平均行程时间*/
+    }
+    /**
+     *
+     *  (节点)C0-2-->---->C2
+     *           1 /
+     *            /(R)
+     *           C1
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateSingleLaneVehicle(secCell c1, endCell c2,double f) {
+      /*  int N = (int)f ,N2=0;
+        double TT=0.0;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC1().size()>0){
+                Vehicle v = c1.getC1().poll();
+                if(v!=null){
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.c1.offer(v);
+                }
+            }
+            startIndex++;
+        }*/
+    }
+    /**
+     *
+     *  (节点)C0-2-->---->C2
+     *           1 /
+     *            /(R)
+     *           C1
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateRightVehicle(endCell c1, ctmCell c2,double f) {
+        int N = (int)f ,N2=0;
+        double TT=0.0;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC1().size()>0){
+                Vehicle v = c1.getC1().poll();
+                if(v!=null){
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.c1.offer(v);
+                }
+            }
+            startIndex++;
+        }
+    }
+    /**
+     *
+     *  (节点)C0-2-->---->C2
+     *           1 /
+     *            /(R)
+     *           C1
+     * @param c1
+     * @param c2
+     * @param steer
+     * @param f
+     */
+    private static void updateRightVehicle1(endCell c1, ctmCell c2,String[] steer,double f) {
+        int N1 = (int)f ,N2=0;
+        double TT=0.0;
+        int idx0 = 0;
+        Canal cal = c1.getCanal();
+        /*移除终点车辆*/
+        ArrayDeque<Vehicle> dq0 = c1.getQueMap().get("D");
+        if(dq0!=null){
+            N2 = dq0.size();
+            TT = vehReachGarage(TT,c1,cal,dq0);
+        }
+
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq = (ArrayDeque<Vehicle>) entry.getValue();
+            if(dq.size()>0){
+                if(steer!=null){
+                    if(k.equals(steer[0])){
+                        while(idx0<N1){
+                            TT = offerQueue(TT,cal,c2,dq);
+                            idx0++;
+                        }
+                    }
+                }
+            }
+            if(dq.size()==0) it.remove();
+        }
+        Edge edge;
+        edge = initCtm.getEdgeByEndCell(c1);
+        int N = N1+N2;
+        if(N> 0){
+            edge.setTravleTime(MathSupplier.div(TT,N));/*路段平均行程时间*/
+            //edge.setWeight(edge.getTravleTime());
+        }
+
+
+    }
+    /**
+     * ---->C1---->C2--->
+     * 更新路段车流
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateRoadVehicle(ctmCell c1, ctmCell c2,double f) {
+        int N = (int)f;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC1().size()>0){
+                Vehicle v = c1.getC1().poll();
+                if(v!=null){
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.c1.offer(v);
+                }
+            }
+            startIndex++;
+        }
+    }
+
+    /**
+     * 十字型交叉口路段尾元胞分流
+     * @param c1
+     * @param c2
+     * @param c3
+     * @param c4
+     */
+    private static void updateTTOfDivVehicle(secCell c1,
+                                             endCell c2,
+                                             endCell c3,
+                                             endCell c4,double f1,double f2,double f3,double f4) {
+        /*获取当前路段*/
+        Edge e;
+        Ramp ramp;/*匝道对象*/
+        Vehicle v ;
+        int N1 = (int)f1,N2 = (int)f2,N3 = (int)f3,N4 = (int)f4;
+        String r1 ,r2, r3, r4;/*车辆转向*/
+        Canal cal = c1.getCanal();
+        int idx0 = 0 , idx1 = 0 ,idx2 = 0 ;
+
+        e = initCtm.findEdgByName(constant.ctmls,c1.getLaneId  ());
+        ramp = e.getRamp();
+        ArrayDeque<Vehicle> reque = ramp.getRque();/*用来存放终点车辆队列*/
+
+        r2 = c2.getC_dir();
+        r3 = c3.getC_dir();
+        r4 = c4.getC_dir();
+
+
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq1 = (ArrayDeque<Vehicle>) entry.getValue(); /*排队车辆*/
+            if(dq1.size()>0){
+                if(k.equals(r2)){
+                    while(idx0<N1){
+                        //offerQueue1(cal,c2,dq1);
+                        idx0++;
+                    }
+                }
+                if(k.equals(r3)){
+                    while(idx1<N2){
+                       // offerQueue1(cal,c3,dq1);
+                        idx1++;
+                    }
+                }
+                if(k.equals(r4)){
+                    while(idx1<N3){
+                        //offerQueue1(cal,c4,dq1);
+                        idx1++;
+                    }
+                }
+                if(k.equals("3")){
+                    while (idx2<N4){
+                        v = dq1.peek();
+                        if(v==null){
+                            System.out.println();
+                        }
+                        reque.offer(v); /*处理终点车辆*/
+                        dq1.poll();
+                        updateCanal(cal,v);
+                        idx2++;
+                    }
+                    //ramp.setRque(reque);
+                    //e.setRamp(ramp);
+                }
+            }
+            if(dq1.size()==0) it.remove();
+        }
+
+/*
+
+        ArrayDeque<Vehicle> deque = c1.getC1();
+        boolean fag = deque.size()>0;
+        System.out.println(deque.size());
+        System.out.println(fag);
+        if(deque.size()>0){
+            while (idx0<N){
+                v = deque.peek();
+                r1 = v.getSteer();
+                if(r2.equals(r1)){
+                    if(v==null){
+                        System.out.println();
+                    }
+                    c2.getC1().offer(v);*//*入队*//*
+                    v.setCurCellPosition(c2.getC_id());
+                }else if(r3.equals(r1)) {
+                    if(v==null){
+                        System.out.println();
+                    }
+                    c3.getC1().offer(v);*//*入队*//*
+                    v.setCurCellPosition(c3.getC_id());
+                }else if(r4.equals(r1)) {
+                    c4.getC1().offer(v);*//*入队*//*
+                    v.setCurCellPosition(c4.getC_id());
+                }else if("3".equals(r1)) {
+                    reque.offer(v); *//*处理终点车辆*//*
+                }
+                v = deque.poll();*//*从原队列中移除该车辆*//*
+                idx0++;
+            }
+        }*/
+    }
+
+    /**
+     *    C1
+     *      \
+     *       --->C3
+     *      /
+     *    C2
+     * @param c1
+     * @param c2
+     * @param c3
+     * @param clk
+     * @param f1
+     * @param f2
+     */
+    private static void updateMerVehicle(ctmCell c1, ctmCell c2, ctmCell c3,ctmLinks clk, double f1, double f2) {
+        boolean fag = clk.getIntType()==4&&(clk.getCurPhase() == 2||clk.getCurPhase() == 4);
+        if(fag){
+            /*十字交叉口 2、4相位合流*/
+            if(f1==0&&f2!=0){
+                updateRoadVehicle(c2,c3,f2);
+            }else if(f1!=0&&f2==0){
+                updateRoadVehicle(c1, c3, f1);
+            }else if(f1!=0&&f2!=0){
+                updateRoadVehicle(c1,c3,f1);
+                updateRoadVehicle(c2,c3,f2);
+            }
+        }
+        if(!fag){
+            /*其他*/
+            if(f1==0 && f2!=0) {
+                updateRightVehicle((endCell)c2, c3, f2);
+            }else if(f1!= 0&&f2==0) {
+                updateRoadVehicle(c1, c3, f1);
+            }else if(f1!=0&&f2!=0) {
+                updateRoadVehicle(c1, c3, f1);
+                updateMerRightVehicle((endCell) c2, c3, clk.getSter(), f2);
+            }
+        }
+
+    }
+    private static void updateDiVehicle1(secCell c1,
+                                         endCell c2,
+                                         endCell c3, double f1,double f2,double f3) {
+        /*获取当前路段*/
+        Edge e;
+        Ramp ramp;/*匝道对象*/
+        Vehicle v ;
+        String r1 ,r2, r3 ;/*车辆转向*/
+        int idx0 = 0 , idx1 = 0 ,idx2 =0;
+        Canal cal = c1.getCanal();
+        int N1 = (int)f1 ,N2 = (int)f2,N3 = (int)f3;
+
+        e = initCtm.findEdgByName(constant.ctmls,c1.getLaneId());
+        ramp = e.getRamp();
+        ArrayDeque<Vehicle> reque = ramp.getRque();/*用来存放终点车辆队列*/
+
+        r2 = c2.getC_dir();
+        r3 = c3.getC_dir();
+
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq1 = (ArrayDeque<Vehicle>) entry.getValue(); /*排队车辆*/
+            if(dq1.size()>0){
+                if(k.equals(r2)){
+                    while(idx0<N1){
+                        offerQueue1(cal,c2,dq1);
+                        idx0++;
+                    }
+                }
+                if(k.equals(r3)){
+                    while(idx1<N2){
+                        offerQueue1(cal,c3,dq1);
+                        idx1++;
+                    }
+                }
+                if(k.equals("3")){
+                    while (idx2<N3){
+                        v = dq1.peek();
+                        reque.offer(v); /*处理终点车辆*/
+                        dq1.poll();
+                        updateCanal(cal,v);
+                        idx2++;
+                    }
+                }
+            }
+            if(dq1.size()==0) it.remove();
+        }
+    }
+
+
+    private static double vehReachGarage(double TT,
+                                         endCell edc,
+                                         Canal cal,
+                                         ArrayDeque<Vehicle> dq1) {
+        Vehicle v;
+        String targetSource;
+        Iterator<Vehicle> it = dq1.iterator();
+        while(it.hasNext()){
+             v = it.next();
+             if(v.isReach()){
+                 v = dq1.poll();
+                 v.setTravseTime(curStep-v.getExtanceTime()+1);/*车辆通过路段时间*/
+                 TT+=v.getTravseTime();
+                 /*存放车辆的车库id*/
+                 targetSource = v.getDefaultGraphPath().getEndVertex();
+                 LinkedList<Vehicle> gv = stmSim.getGarageByIntId(lgs, targetSource).getReachVeh();
+                 gv.offer(v);/*加入车库*/
+                 /*以目标节点为终点的车辆流出后 重新更新尾元胞车流量*/
+                 updateEndCellFlow(edc,cal,v);
+             }
+        }
+        if(dq1.size()==0){
+            edc.getQueMap().remove("D");
+        }
+        return TT;
+    }
+
+    /**
+     * 更新车流
+     * @param edc
+     * @param cal
+     * @param v
+     */
+    private static void updateEndCellFlow(endCell edc,Canal cal,Vehicle v){
+        int vN = stmSim.getVehicleCount(edc);
+        edc.setC_n(vN);
+        updateCanal(cal, v);
+    }
+    /**
+     * 节点车辆更新
+     * @param c
+     * @param dq
+     */
+    private static void offerQueue1(Canal cal,ctmCell c, ArrayDeque<Vehicle> dq) {
+        Vehicle v;
+        if(dq.size()>0){
+            v = dq.peek();
+            if(v!=null){
+                v = dq.poll();
+
+                c.getC1().offer(v);  /*进入相应队列*/
+                if(c.getLaneId().equals("17")||c.getLaneId().equals("38")){
+                    if(v.getDefaultGraphPath().getStartVertex().equals("16")){
+                        System.out.println();
+                    }
+
+                }
+                v.setCurCellPosition(c.c_id);
+                v.setCurPosLane(c.getLaneId()); /*车辆所在路段位置*/
+                updateCanal(cal, v);
+            }
+        }
+    }
+
+    /**
+     * 节点车辆更新
+     * @param c
+     * @param dq
+     */
+    private static double offerQueue(double Time,Canal cal,ctmCell c, ArrayDeque<Vehicle> dq) {
+        Vehicle v;
+        String lds;
+        if(dq.size()>0){
+            v = dq.peek();
+            if(v!=null){
+                lds = v.getCurPosLane();
+                v = dq.poll();
+
+                v.setTravseTime(curStep-v.getExtanceTime()+1);/*车辆通过路段时间*/
+                Time+=v.getTravseTime();
+
+                c.c1.offer(v);  /*进入相应队列*/
+                v.setCurCellPosition(c.c_id);
+                if(!lds.equals(c.getLaneId())){
+                    /*重置车辆路径 节省内存空间*/
+                   // restVehPath(v, lds);
+                    /*车辆所在路段位置*/
+                    v.setCurPosLane(c.getLaneId());
+
+                }
+                updateCanal(cal, v);
+            }
+            return Time;
+        }
+        return 0;
+    }
+
+    private static void restVehPath(Vehicle v, String lds) {
+        LinkedList dphs = v.getDefaultGraphPath().getPaths();
+        Iterator<DefaultWeightLabelEdge> dls = dphs.iterator();
+        while (dls.hasNext()){
+            DefaultWeightLabelEdge  dfed = dls.next();
+            if(dfed.getLabel().equals(lds)){
+                dls.remove();
+            }
+        }
+    }
+
+    /**
+     * 更新分流比例
+     * @param cal
+     * @param v
+     */
+    private static void updateCanal(Canal cal, Vehicle v) {
+        String vster = v.getSteer();
+        if(vster.equals("0")) cal.setS_n(cal.getS_n()-1);
+        if(vster.equals("2")) cal.setR_n(cal.getR_n()-1);
+        if(vster.equals("1")) cal.setL_n(cal.getL_n()-1);
+        if(vster.equals("3")) cal.setD_n(cal.getD_n()-1);
+        cal.setT_n(cal.getT_n());
+
+    }
+    /**
+     * 返回三个数的最小值
+     * @Title: medmin
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param a
+     * @param b
+     * @param c
+     * @return double   返回类型
+     * @throws
+     */
+    private static double medmin(double a,double b,double c){
+        double min = (a < b) ? a :b ;
+        min = (min < c) ? min : c ;
+        return min;
+    }
+    /**
+     * 取中间值
+     * @Title: median
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param a
+     * @param b
+     * @param c
+     * @return double   返回类型
+     * @throws
+     */
+    private static double median(double a,double b,double c){
+        if ((b - a) * (a - c) >= 0) {
+            return a;
+        } else if ((a - b) * (b - c) >= 0) {
+            return b;
+        } else {
+            return c;
+        }
+    }
+    /**
+     * 提供（相对）精确的除法运算，当发生除不尽的情况时，精确到 小数点以后10位，以后的数字四舍五入
+     * @Title: div
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param v1  被除数
+     * @param v2  除数
+     * @return double   返回类型
+     * @throws
+     */
+    private static double div(double v1, double v2) {
+        return MathSupplier.div(v1, v2, DEFAUTL_SCALE);
+    }
+    /**
+     * 提供精确的减法运算
+     * @Title: sub
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param v1  被减数
+     * @param v2  减数
+     * @return double   返回类型
+     * @throws
+     */
+    private static double sub(double v1, double v2) {
+        return MathSupplier.sub(v1,v2);
+    }
+    /**
+     * 重写Math.min方法
+     */
+    private static double min(double v1, double v2){
+        return Math.min(v1,v2);
+    }
+    /**
+     * 重写Math.floor方法
+     */
+    private static double floor(double v){
+        return Math.floor(v);
+    }
+    /**
+     * 重写Math.round
+     */
+    private static double round(double v){
+        return Math.round(v);
+    }
+
+    /**
+     * 重写add
+     * @param v1
+     * @param v2
+     * @return
+     */
+    private static double add(double v1,double v2){
+        return MathSupplier.add(v1,v2);
+    }
+
+}
+
+
+
+
+
+package transport.ctm.main;
+
+import org.apache.commons.lang3.StringUtils;
+import transport.ctm.model.*;
+import transport.ctm.util.constant;
+import transport.graph.*;
+import transport.math.util.MathSupplier;
+
+import javax.swing.text.html.parser.Entity;
+import java.math.BigDecimal;
+import java.util.*;
+
+/**
+ * @Title: simulatCtm.java
+ * @Package edu.jiaotong.transport.ctm.main;
+ * @Description: 车流传播
+ * @author liangxiao.zhou
+ * @date Jan 18, 2019 16:11:14 PM
+ * @version V3.0
+ */
+public class simulatCtm {
+    // 默认除法运算精度
+    private static String  cdir;
+    private static int curStep;
+    private static int c1,c2,c3,c4;
+    private static double b1,b2,b3,b4;
+    private static final int DEF_DIV_SCALE = 10;
+    private static final int DEFAUTL_SCALE = 3;
+    private static final double  ctm_w_vf = 0.40 ;
+    private static double fmin,f,f1,f2,f3,f4,dt=1.0;
+    private static double rightRatio = 0.8,leftRatio = 0.6;
+    private static List<ctmCell> ctms = constant.ctms;
+    private static List<ctmLinks> clks = constant.clks;
+    public static List<Garage> lgs = constant.lg;
+    private static List<Edge> ctmls = constant.ctmls;
+
+
+    /**
+     *
+     * 节点、路段模型
+     * @Title: ctmSiulat
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @return Edge   返回类型
+     * @throws
+     */
+    public static void ctmSimulat(int step){
+        curStep=step;
+        if (!ctms.isEmpty()) {
+            ctms.forEach((cc)->{
+                switch(cc.c_type){
+                    case 0:case 3 :case 4 :
+                        /*当前元胞的接受量*/
+                        cc.pos_in = floor(min(cc.c_rate*dt,ctm_w_vf*(cc.c_cap-cc.c_n)));
+                        /*当前元胞的发送量*/
+                        cc.pos_out =floor(min(cc.c_rate*dt, cc.c_n));
+
+                        cc.real_in = 0.0;
+                        cc.real_out = 0.0;
+                        break ;
+                    case 1:
+                        cc.c_n = cc.c_n + cc.c_rate*dt;
+                        cc.pos_in = 0;
+                        cc.pos_out = cc.c_n;
+
+                        cc.real_in = 0.0;
+                        cc.real_out = 0.0;
+                        break;
+                    case 2:
+                        cc = (orginCell)cc;
+                        /*当前元胞的接受量*/
+                        cc.pos_in = floor(min(cc.c_rate*dt,ctm_w_vf*(cc.c_cap-cc.c_n)));
+                        /*当前元胞的发送量*/
+                        cc.pos_out =floor(min(cc.c_rate*dt, cc.c_n));
+
+                        cc.real_in = 0.0;
+                        cc.real_out = 0.0;
+
+                        ((orginCell) cc).f_l_in = 0.0;
+                        break;
+                }
+            });
+        }
+        for (ctmLinks clk : clks) {
+            if (clk.getAccess() == 0) {
+                continue;
+            }
+            switch (clk.getType()) {
+                case 0:
+                    c1 = clk.getCells()[0]; /*车流传递*/
+                    c2 = clk.getCells()[1];
+
+                    ctmCell c10 = ctms.get(c1);
+                    ctmCell c20 = ctms.get(c2);
+
+                    f = floor(min(c10.pos_out, c20.pos_in));
+                    c10.real_out = f;
+                    c20.real_in  = f;
+
+                    if(f>0){
+                        updateRoadVehicle(c10, c20,f);/*更新vehicle object*/
+                    }
+                    break;
+                case 3:
+                    c1 = clk.getCells()[0]; /*车流传递*/
+                    c2 = clk.getCells()[1];
+
+                    ctmCell c31 = ctms.get(c1);
+                    orginCell c32 = (orginCell) ctms.get(c2);
+
+                    f = floor(min(c31.pos_out, c32.pos_in));
+                    c31.real_out = f;
+                    c32.real_in = f + c32.f_l_in;
+
+                    if(f>0){
+                        updateNodeVehicle(c31, c32,f);/*更新vehicle object*/
+                    }
+                    break;
+                case 1:
+                    /*合流*/
+                    c1 = clk.getCells()[0];
+                    c2 = clk.getCells()[1];
+                    c3 = clk.getCells()[2];
+                    b1 = clk.getKp()[0];
+                    b2 = clk.getKp()[1];
+
+                    endCell c11 = (endCell) ctms.get(c1);
+                    endCell c12 = (endCell) getCtmCell(clk);
+                    orginCell c13 = (orginCell) ctms.get(c3);
+
+                    /*渠化子元胞的实际流出能力*/
+                    if(c11.getC_dir().equals("0") & c12.getC_dir().equals("2") ){
+                        if (c13.pos_in >= c11.pos_out + c12.pos_out) {
+                            f1 = c11.pos_out;
+                            f2 = c12.pos_out;
+
+                          /*  if(f2>0){
+                                System.out.println();
+                            }*/
+                            f2 = round(mul(rightRatio,f2));/*右转*/
+                        } else {
+                            f1 = median(c11.pos_out, sub(c13.pos_in, c12.pos_out), b1 * c13.pos_in);
+                            f1 = round(f1);
+                            f2 = sub(c13.pos_in, f1);
+                            if(f2<0){
+                                System.out.println();
+                            }
+                            f2 = round(mul(rightRatio,f2));/*右转*/
+
+                        }
+                    }
+                    if(c11.getC_dir().equals("1") & c12.getC_dir().equals("2") ){
+                        if (c13.pos_in >= c11.pos_out + c12.pos_out) {
+                          /*  if(c11.pos_out + c12.pos_out >0){
+                                System.out.println();
+                            }*/
+                            f1 = round(mul(leftRatio, c11.pos_out));/*左转*/
+                            f2 = round(mul(rightRatio,c12.pos_out));/*右转*/
+                            if(f2<0){
+                                System.out.println();
+                            }
+                        } else {
+                            f1 = median(c11.pos_out, sub(c13.pos_in, c12.pos_out), b1 * c13.pos_in);
+                            f2 = median(c12.pos_out, sub(c13.pos_in, c11.pos_out), b2 * c13.pos_in);
+                           /* if(f1>0){
+                                System.out.println();
+                            }*/
+                            f1 = round(mul(leftRatio,f1));/*左转*/
+
+                           /* if(f2>0){
+                                System.out.println();
+                            }*/
+
+                           /* f2 = sub(c13.pos_in, f1);*/
+                            if(c12.c_n<f2){
+                                System.out.println();
+                            }
+                            f2 = round(mul(rightRatio,f2));/*右转*/
+                        }
+                    }
+/*
+                    if (c13.pos_in >= c11.pos_out + c12.pos_out) {
+                        f1 = c11.pos_out;
+                        f2 = c12.pos_out;
+                    } else {
+                        f1 = median(c11.pos_out, sub(c13.pos_in, c12.pos_out), b1 * c13.pos_in);
+                        *//*f2 = median(c21.pos_out, sub(c31.pos_in, c11.pos_out), b2 * c31.pos_in);*//*
+                        f1 = round(f1);
+                        f2 = sub(c13.pos_in, f1);
+                    }*/
+                    c11.real_out = f1;
+                    c12.real_out = f2;
+
+                    c13.real_in = f1 + f2;
+                    c13.f_l_in = f1 + f2;
+
+                    updateRightFlow(c13);
+                    if(f1>0||f2>0){
+                        updateMerVehicle1(c11,c12,c13,f1,f2);
+                    }
+
+                    break;
+                case 2:/*分流*/
+                    int length = clk.getCells().length;
+                    switch (length){
+                        case 2:
+                            c1 = clk.getCells()[0];
+                            c2 = clk.getCells()[1];
+                            if(clk.getFlag()==1){
+                                /*单车道分流*/
+                                secCell r1 = initCtm.getSecCell(ctms,c1);
+                                endCell r2 = (endCell) ctms.get(c2);
+                                f = floor(min(r1.pos_out, r2.pos_in));
+
+                                r1.real_out = f;
+                                r2.real_in = f ;
+
+                                /*单车道分流只有一个子元胞*/
+                                if(f>0){
+                                    updateSingleLaneVehicle(r1, r2,f);/*更新vehicle object*/
+                                }
+                            }else{
+                                /*处理右转 、左转相位*/
+                                b1 = clk.getKp()[0];
+                                endCell r1 = initCtm.getEndCell(ctms,c1);
+                                orginCell r2 =(orginCell) ctms.get(c2);
+
+                                f = floor(min(r1.pos_out, r2.pos_in));
+                                /*渠化子元胞的实际流出能力*/
+                                cdir = r1.getC_dir();
+                                if(cdir.equals("2")){
+                                    if(f>0){
+                                        System.out.println();
+                                    }
+                                    f = round(mul(rightRatio,f));/*右转*/
+                                }
+                                if(cdir.equals("1")){
+                                    f = round(mul(leftRatio,f));/*左转*/
+                                }
+
+                                r1.real_out = f;
+                                r2.real_in = f ;
+                                r2.f_l_in = f;
+
+                                /*右转车流*/
+                                updateRightFlow(r2);
+                                if(f>0){
+                                    updateRightVehicle(r1, r2, f);/*更新vehicle object*/
+                                }
+                            }
+                            break;
+                        case 3:
+                            c1 = clk.getCells()[0];
+                            c2 = clk.getCells()[1];
+                            c3 = clk.getCells()[2];
+                            b1 = clk.getKp()[0];
+                            b2 = clk.getKp()[1];
+                            secCell c211 = (secCell) ctms.get(c1);
+                            endCell c221 = (endCell) ctms.get(c2);
+                            endCell c231 = (endCell) ctms.get(c3);
+
+                            if(b1!=0&&b2!=0){
+                                f = floor(medmin(c211.pos_out, div(c221.pos_in,b1),div(c231.pos_in,b2)));
+                            }
+                            if(b1==0){
+                                f = floor(min(c211.pos_out,c231.pos_in));
+                            }
+                            if(b2==0){
+                                f = floor(min(c211.pos_out,c221.pos_in));
+                            }
+
+                            f1 = round(f * b1);
+                            f2 = sub(f,f1);
+
+                            c211.real_out = f;
+                            c221.real_in  = f1;
+                            c231.real_in  = f2;
+
+                            /*车辆传播*/
+                            if(f>0){
+                                updateDiVehicle1(c211,c221,c231,f1,f2);
+                            }
+
+                            break;
+                        case 4:
+                            /*十字型交叉口*/
+                            c1 = clk.getCells()[0];
+                            c2 = clk.getCells()[1];
+                            c3 = clk.getCells()[2];
+                            c4 = clk.getCells()[3];
+
+                            b1 = clk.getKp()[0];/*左转*/
+                            b2 = clk.getKp()[1];/*直行*/
+                            b3 = clk.getKp()[2];/*右转*/
+
+                            secCell c41 = (secCell) ctms.get(c1);
+                            endCell c42 = (endCell) ctms.get(c2);
+                            endCell c43 = (endCell) ctms.get(c3);
+                            endCell c44 = (endCell) ctms.get(c4);
+                            if (b1==0&b2==0&b3==0) {
+                                f = 0.0;
+                            }
+                            if (b2==0&b3==0&b1>0) {
+                                f = floor(min(c41.pos_out,div(c42.pos_in,b1)));
+                            }
+                            if(b1==0&b3==0&b2>0){
+                                f = floor(min(c41.pos_out,div(c43.pos_in,b2)));
+                            }
+                            if(b1==0&b2==0&b3>0){
+                                f = floor(min(c41.pos_out,div(c44.pos_in,b3)));
+                            }
+                            if(b2>0&b3>0&b2+b3==1){
+                                f = floor(medmin(c41.pos_out,div(c43.pos_in,b2),div(c44.pos_in,b3)));
+                            }
+                            if(b1>0&b3>0&b1+b3==1){
+                                f = floor(medmin(c41.pos_out,div(c42.pos_in,b1),div(c44.pos_in,b3)));
+                            }
+                            if(b1>0&b2>0&b1+b2==1){
+                                f = floor(medmin(c41.pos_out,div(c42.pos_in,b1),div(c43.pos_in,b2)));
+                            }
+                            if(b1>0&b2>0&b3>0&b1+b2+b3==1){
+                                fmin =Math.floor(MathSupplier.medmin(div(c42.pos_in,b1),div(c43.pos_in,b2),div(c44.pos_in,b3)));
+                                f = Math.min(c41.pos_out,fmin);
+                            }
+
+                            f1 = round(f * b1);
+                            f2 = round(f * b2);
+                            if(f1+f2>f&f>0){
+                                f2 = sub(f,f1);
+                            }
+                            f3 = sub(f,add(f1,f2));
+                            c41.real_out = f;
+                            c42.real_in  = f1;
+                            c43.real_in  = f2;
+                            c44.real_in  = f3;
+
+
+                            /*车辆传播*/
+                            if(f>0){
+                                updateTTOfDivVehicle(c41,c42,c43,c44,f1,f2,f3);
+                            }
+
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        /*更新路段车流*/
+        ctms.forEach((ctm)->{
+            int size=0;
+            int type = ctm.getC_type();
+            ctm.c_n = ctm.c_n + ctm.real_in - ctm.real_out;
+            if(ctm.c_n<0){
+                System.out.println();
+            }
+
+            if(type==0||type==1||type==2){
+                size = ctm.getC1().size();
+                if(ctm.c_n != size){
+                    System.out.println(" [CURSTEP:"+ step + ", ERROR CID:" + ctm.c_id +"]");
+                }
+            }
+            if(type==3){
+                endCell edc = (endCell) ctm;
+                size = edc.getC1().size()+edc.getC2().size();
+                if(ctm.c_n != size){
+                    System.out.println(" [CURSTEP:"+ step + ", ERROR CID:" + ctm.c_id +"]");
+                }
+            }
+            if(ctm.c_type == 1) ctm.setC_rate(0.0);
+        });
+    }
+    /**
+     *   节点合流 获取C1 或者 C2
+     *    C3----> -->---C2
+     *         /
+     *      C1/(R C1 路段首元胞)
+     *
+     *        |
+     *        C3(路段起始元胞)
+     *       / \
+     *      /   C2(内部元胞)
+     *     C1(内部元胞)
+     *
+     * @param clk
+     * @return
+     */
+    protected static ctmCell getCtmCell(ctmLinks clk) {
+        boolean fag = clk.getIntType()==4&&(clk.getCurPhase() == 2||clk.getCurPhase() == 4);
+        ctmCell  c21 = null ;
+        if(fag)  c21 = ctms.get(c2);
+        if(!fag) c21 = initCtm.getEndCell(ctms,c2);
+        return c21;
+    }
+
+    /**
+     *
+     * @param cc
+     */
+    private static void updateRightFlow(orginCell cc) {
+        double posCn = cc.c_n + cc.real_in;
+        cc.pos_in = Math.floor(Math.min(cc.c_rate*dt,ctm_w_vf*(cc.c_cap-posCn)));
+    }
+    /**
+     *
+     * (secCell)C1--->---->C2(endCell)
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateSingleLaneVehicle(secCell c1, endCell c2,double f) {
+        String r2;
+        int idx=0;
+        int N = (int)f ;
+        r2 = c2.getC_dir();
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq1 = (ArrayDeque<Vehicle>) entry.getValue(); /*排队车辆*/
+            if(dq1.size()>0){
+                /*所有车辆按先进先出排成一队*/
+                if(k.equals(r2)){
+                    while(idx<N){
+                        offerQueue1(c1.getCanal(),c2,dq1);
+                        idx++;
+                    }
+                }
+            }
+            if(dq1.size()==0) it.remove();
+        }
+
+    }
+    /**
+     *
+     *  (节点)C0-2-->---->C2
+     *           1 /
+     *            /(R)
+     *           C1
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateRightVehicle(endCell c1, ctmCell c2,double f) {
+        int N = (int)f ,N2=0;
+        double TT=0.0;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC2().size()>0){
+                Vehicle v = c1.getC2().poll();
+                if(v!=null){
+                    if(v.getSteer().equals("3")){
+                        System.out.println("终点车辆");
+                    }
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.getC1().offer(v);
+                }
+            }
+            startIndex++;
+        }
+    }
+
+    /**
+     * ---->C1()---->C2()--->
+     * 更新交叉口车流
+     * @param c1 endcell 路段末尾元胞
+     * @param c2 orgincell 交叉口进口元胞
+     * @param f
+     */
+    private static void updateSingleRoadVehicle(endCell c1, orginCell c2,double f) {
+        int N = (int)f;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC2().size()>0){
+                Vehicle v = c1.getC2().poll();
+                if(v!=null){
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.c1.offer(v);
+                }
+            }
+            startIndex++;
+        }
+        System.out.println();
+    }
+
+    /**
+     * ---->C1---->C2--->
+     * 更新路段车流
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateNodeVehicle(ctmCell c1, orginCell c2,double f) {
+        int N = (int)f;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC1().size()>0){
+                Vehicle v = c1.getC1().poll();
+                if(v!=null){
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.getC1().offer(v);
+                }
+            }
+            startIndex++;
+        }
+    }
+
+
+    /**
+     * ---->C1---->C2--->
+     * 更新路段车流
+     * @param c1
+     * @param c2
+     * @param f
+     */
+    private static void updateRoadVehicle(ctmCell c1, ctmCell c2,double f) {
+        int N = (int)f;
+        int startIndex = 0;
+        while (startIndex<N){
+            if(c1.getC1().size()>0){
+                Vehicle v = c1.getC1().poll();
+                if(v!=null){
+                    v.setCurCellPosition(c2.getC_id());
+                    v.setCurPosLane(c2.getLaneId());
+                    c2.getC1().offer(v);
+                }
+            }
+            startIndex++;
+        }
+    }
+
+    /**
+     * 十字型交叉口路段尾元胞分流
+     * @param c1
+     * @param c2
+     * @param c3
+     * @param c4
+     */
+    private static void updateTTOfDivVehicle(secCell c1,
+                                             endCell c2,
+                                             endCell c3,
+                                             endCell c4,double f1,double f2,double f3) {
+        /*获取当前路段*/
+        Edge e;
+        Vehicle v ;
+        int N1 = (int)f1,N2 = (int)f2,N3 = (int)f3;
+        String r1 ,r2, r3, r4;/*车辆转向*/
+        Canal cal = c1.getCanal();
+        int idx0 = 0 , idx1 = 0 ,idx2 = 0 ;
+
+        r2 = c2.getC_dir();
+        r3 = c3.getC_dir();
+        r4 = c4.getC_dir();
+
+
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq1 = (ArrayDeque<Vehicle>) entry.getValue(); /*排队车辆*/
+            if(dq1.size()>0){
+                if(k.equals(r2)){
+                    while(idx0<N1){
+                        offerQueue1(cal,c2,dq1);
+                        idx0++;
+                    }
+                }
+                if(k.equals(r3)){
+                    while(idx1<N2){
+                        offerQueue1(cal,c3,dq1);
+                        idx1++;
+                    }
+                }
+                if(k.equals(r4)){
+                    while(idx2<N3){
+                        offerQueue1(cal,c4,dq1);
+                        idx2++;
+                    }
+                }
+            }
+            if(dq1.size()==0) it.remove();
+        }
+    }
+
+    /**
+     *
+     * @param c1
+     * @param c2
+     * @param c3
+     * @param f1
+     * @param f2
+     */
+    private static void updateMerVehicle1(endCell c1, endCell c2, orginCell c3, double f1, double f2) {
+        if (f1==0&f2!=0) {
+            updateSingleRoadVehicle(c2,c3,f2);
+        }else if(f1!=0&f2==0) {
+            updateSingleRoadVehicle(c1,c3,f1);
+        }else if (f1!=0&f2!=0) {
+            updateDoubleMerVehicle1(c1,c2,c3,f1,f2);
+        }
+    }
+
+    /**
+     * 交叉口元胞合流
+     * @param c1
+     * @param c2
+     * @param c3
+     * @param f1
+     * @param f2
+     */
+    private static void updateDoubleMerVehicle1(endCell c1, endCell c2, orginCell c3, double f1, double f2) {
+        int r1 ,r2 ;
+        r1 = strToInt(c1.getC_dir());
+        r2 = strToInt(c2.getC_dir());
+
+        if((r1==0 & r2==2) || (r1==0 & r2==1)){
+            /*(S,R)直行优先、(S,L)直行优先*/
+            updateSingleRoadVehicle(c1,c3,f1);
+            updateSingleRoadVehicle(c2,c3,f2);
+        }
+        if(r1==1 & r2==2){
+            /*(L,R)右转优先*/
+            updateSingleRoadVehicle(c2,c3,f2);
+            updateSingleRoadVehicle(c1,c3,f1);
+        }
+    }
+    private static void updateDiVehicle1(secCell c1,
+                                         endCell c2,
+                                         endCell c3, double f1,double f2) {
+        /*获取当前路段*/
+        Edge e;
+        Ramp ramp;/*匝道对象*/
+        Vehicle v ;
+        String r1 ,r2, r3 ;/*车辆转向*/
+        int idx0 = 0 , idx1 = 0 ,idx2 =0;
+        Canal cal = c1.getCanal();
+        int N1 = (int)f1 ,N2 = (int)f2;
+
+        r2 = c2.getC_dir();
+        r3 = c3.getC_dir();
+
+        Iterator<Map.Entry<String,ArrayDeque<Vehicle>>> it = c1.getQueMap().entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry entry = it.next();
+            String k = (String)entry.getKey();
+            ArrayDeque<Vehicle> dq1 = (ArrayDeque<Vehicle>) entry.getValue(); /*排队车辆*/
+            if(dq1.size()>0){
+                if(k.equals(r2)){
+                    if(dq1.size()<N1){
+                        System.out.println("error!" + dq1.size() +"--N1 "+ N1);
+                    }
+                    while(idx0<N1){
+                        offerQueue1(cal,c2,dq1);
+                        idx0++;
+                    }
+                }
+                if(k.equals(r3)){
+                    if(dq1.size()<N2){
+                        System.out.println("error!" + dq1.size() +"--N2 "+ N2);
+                    }
+                    while(idx1<N2){
+                        offerQueue1(cal,c3,dq1);
+                        idx1++;
+                    }
+                }
+            }
+            if(dq1.size()==0) it.remove();
+        }
+    }
+    /**
+     * 节点车辆更新
+     * @param c
+     * @param dq
+     */
+    private static void offerQueue1(Canal cal,ctmCell c, ArrayDeque<Vehicle> dq) {
+        Vehicle v;
+        if(dq.size()>0){
+            v = dq.peek();
+            if(v!=null){
+                v = dq.poll();
+
+                c.getC1().offer(v);  /*进入相应队列*/
+                v.setCurCellPosition(c.c_id);
+                v.setCurPosLane(c.getLaneId()); /*车辆所在路段位置*/
+                updateCanal(cal, v);
+            }
+        }
+    }
+
+    /**
+     *
+     * @param v
+     * @param lds
+     */
+    private static void restVehPath(Vehicle v, String lds) {
+        LinkedList dphs = v.getDefaultGraphPath().getPaths();
+        Iterator<DefaultWeightLabelEdge> dls = dphs.iterator();
+        while (dls.hasNext()){
+            DefaultWeightLabelEdge  dfed = dls.next();
+            if(dfed.getLabel().equals(lds)){
+                dls.remove();
+            }
+        }
+    }
+
+    /**
+     * 更新分流比例
+     * @param cal
+     * @param v
+     */
+    private static void updateCanal(Canal cal, Vehicle v) {
+        String vster = v.getSteer();
+        if(vster.equals("0")) cal.setS_n(cal.getS_n()-1);
+        if(vster.equals("2")) cal.setR_n(cal.getR_n()-1);
+        if(vster.equals("1")) cal.setL_n(cal.getL_n()-1);
+        if(vster.equals("3")) cal.setD_n(cal.getD_n()-1);
+        cal.setT_n(cal.getT_n());
+
+    }
+    /**
+     * 返回三个数的最小值
+     * @Title: medmin
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param a
+     * @param b
+     * @param c
+     * @return double   返回类型
+     * @throws
+     */
+    private static double medmin(double a,double b,double c){
+        return MathSupplier.medmin(a,b,c);
+    }
+    /**
+     * 取中间值
+     * @Title: median
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param a
+     * @param b
+     * @param c
+     * @return double   返回类型
+     * @throws
+     */
+    private static double median(double a,double b,double c){
+        return MathSupplier.median(a,b,c);
+    }
+    /**
+     * 提供（相对）精确的除法运算，当发生除不尽的情况时，精确到 小数点以后10位，以后的数字四舍五入
+     * @Title: div
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param v1  被除数
+     * @param v2  除数
+     * @return double   返回类型
+     * @throws
+     */
+    private static double div(double v1, double v2) {
+        return MathSupplier.div(v1, v2, DEFAUTL_SCALE);
+    }
+    /**
+     * 提供精确的减法运算
+     * @Title: sub
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param v1  被减数
+     * @param v2  减数
+     * @return double   返回类型
+     * @throws
+     */
+    private static double sub(double v1, double v2) {
+        return MathSupplier.sub(v1,v2);
+    }
+    /**
+     * 重写Math.min方法
+     */
+    private static double min(double v1, double v2){
+        return Math.min(v1,v2);
+    }
+    /**
+     * 重写Math.floor方法
+     */
+    private static double floor(double v){
+        return Math.floor(v);
+    }
+    /**
+     * 重写Math.round
+     */
+    private static double round(double v){
+        return Math.round(v);
+    }
+
+    /**
+     * 重写add
+     * @param v1
+     * @param v2
+     * @return
+     */
+    private static double add(double v1,double v2){
+        return MathSupplier.add(v1,v2);
+    }
+
+    /**
+     * 提供精确的乘法运算
+     * @Title: mul
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param v1 被乘数
+     * @param v2 乘数
+     * @return double   返回类型
+     * @throws
+     */
+    public static double mul(double v1, double v2) { return MathSupplier.mul(v1,v2); }
+
+    /**
+     * 重写Integer.parseInt()方法
+     * @param str
+     * @return
+     */
+    private static int strToInt(String str){
+        if(StringUtils.isNotEmpty(str)){
+           return Integer.parseInt(str);
+        }
+        return -1;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(medmin(div(4,0.059),div(2,0.706),div(7,0.235)));
+    }
+}
+
+
+
+
+protected static void getRoadAvg1(int step, Edge e) {
+        int s1 = 51;
+        int s2 = 200;
+        double T, length, v1;
+        double jam = 0.133, k,k0,k1;
+        double tra = 0.0,freeTime;
+        int t1 = 0, t2 = 0 , t3 = 0 ,t4=0;
+        double avg = 0.0, freeAvg = 54.0, avg0 = 0;
+
+        int sec;
+        ctmCell ctc;
+        endCell edc;
+        secCell stc;
+        ArrayDeque<Vehicle> dq;
+
+        sec = Math.addExact(e.getInCell(), e.getCellNum()) - 1;
+        stc = initCtm.getSecCell(ctms, sec);
+
+        int  startIndex, toIndex;
+        toIndex=sec;
+        startIndex = e.getoCell();
+
+        while (startIndex < toIndex) {
+            ctc = (ctmCell)ctms.get(startIndex);
+            t1 += ctc.getC_n();
+            ++startIndex;
+        }
+
+        for(Integer cid : e.getDcMap().values()){
+            edc = initCtm.getEndCell(ctms,cid);
+            t3+=edc.getC_n();
+        }
+        t2 = (int) stc.getC_n();
+        /*终点车辆*/
+        dq = e.getRamp().getRque();
+        t4 = dq.size();
+        if(t4>0){
+            dq.clear();
+        }
+
+        T = t1 + t2 + t3; /*路段总车辆数*/
+
+        double E = Math.E;
+        double df =0.0;
+
+        /*路段的阻塞密度*/
+        jam = mul(jam, e.getRoadNum());
+
+        k0 = div(jam,Math.E);/*交通低密度值*/
+        k1 = div(jam,2.0);/*交通高密度值*/
+
+        length = e.getCellNum() * 150;/*路段长度*/
+        freeTime = e.getFreeTime();
+        k = MathSupplier.div(T, length);
+    /*    if (k <= k0) {
+            *//*当车流密度很小时，采用安德伍德的指数模型*//*
+            df = mul(freeAvg, sub(1,div(k, jam)));
+            avg = div(freeAvg, Math.pow(Math.E, (div(mul(Math.E, k), jam))));
+            tra = mul(freeTime,Math.pow(Math.E, (div(mul(Math.E, k), jam))));
+        }
+        if (k > k0 & k <= k1) {
+            *//*当车流密度适中时，采用格林希尔刺的线性模型*//*
+            avg = mul(freeAvg, sub(1,div(k, jam)));
+            df = mul(div(freeAvg,Math.E), Math.log(div(jam, k)));
+            tra = mul(freeTime, div(jam, jam - k));
+
+        }
+        if (k > k1) {
+            *//*当车流密度很大时，采用格林铂的对数模型*//*
+            df = mul(freeAvg, sub(1,div(k, jam)));
+            avg = mul(div(freeAvg,Math.E), Math.log(div(jam, k)));
+            tra = mul(freeTime, div(Math.E, Math.log(div(jam, k))));
+        }*/
+      /*  if(k<=k0){
+            avg = div(freeAvg, Math.pow(Math.E, (div(mul(Math.E, k), jam))));
+            tra = mul(freeTime,Math.pow(Math.E, (div(mul(Math.E, k), jam))));
+        }
+        if(k>k0){
+            avg = mul(div(freeAvg,Math.E), Math.log(div(jam, k)));
+            tra = mul(freeTime, div(Math.E, Math.log(div(jam, k))));
+        }*/
+
+        tra = mul(freeTime, div(jam, jam - k));
+        e.setWeight(tra);/*路段阻抗*/
+       /* if (k < 0) avg = freeAvg;
+        if (k > 0) {
+            avg = mul(div(freeAvg,Math.E), Math.log(div(jam, k)));
+        }*/
+
+        if (k == 0) avg = freeAvg;
+        if (k > 0) {
+            avg = mul(freeAvg, sub(1, div(k, jam)));   /*路段平均行程速度*/
+        }
+        double v0 = e.getTempAvg();
+        v0 += avg;
+        e.setTempAvg(v0);
+
+        /*考察时间段内路段平均速度*/
+        if (step >= s1 & step <= s2) {
+            v1 = e.getPeriodAvg();
+            v1 += avg;
+            e.setPeriodAvg(v1);
+        }
+    }
+
+
+    private static void subOfVehSterAndDivScale( Edge cdg,Canal cal, secCell stc, ArrayDeque<Vehicle> deque,String intType) {
+        /*获取车辆转向*/
+        String[] labl = new String[2];
+        String ster = "";
+        DefaultWeightLabelEdge nextRoad;
+        Iterator<Vehicle> it = deque.iterator();
+
+        String endVertex;
+        intersection toInts;
+        endVertex = cdg.getEndVertex().getLabel();/*当前节点的子节点*/
+        /*路段出口对应交叉口*/
+        toInts = initCtm.findIntByLabel(ints, endVertex);
+
+        while (it.hasNext()) {
+            Vehicle v = it.next();
+            String curRoadLabel = v.getCurPosLane();
+            DefaultGraphPath dgp = v.getDefaultGraphPath();
+            LinkedList<DefaultWeightLabelEdge> listr = dgp.getPaths();/*车辆路径*/
+
+            DefaultGraphPath newPath;
+            int nextIndex = 0;
+            int size = listr.size();
+            for (int i = 0; i < listr.size(); i++) {
+                if (listr.get(i).getLabel().equals(curRoadLabel)) {
+                    nextIndex = i + 1;
+                }
+            }
+            if (nextIndex < size) {
+                nextRoad = listr.get(nextIndex);
+                if(nextRoad!=null){
+                    double cgt = getCurStepLaneCongestTime(nextRoad.getFreeTime());
+                    if(nextRoad.getWeight()>cgt){
+                        /*重新搜索最短路径*/
+                        newPath = IniteGraph.algOfSingleSourcePath(toInts.getNlabel(),dgp.getEndVertex());
+                        if(!dgp.getPaths().equals(newPath.getPaths())){
+                            System.out.println("原始路径："+dgp.getPaths());
+                            System.out.println("t调整后路径："+newPath.getPaths());
+                        }
+                        dgp.setPaths(newPath.getPaths());
+                        //System.out.println();
+                    }
+                }
+
+                labl = new String[]{curRoadLabel, nextRoad.getLabel()};
+                ster = getCarSteer(labl);
+                v.setSteer(ster); /*获取转向*/
+            }
+            if (nextIndex >= size) {
+                ster = "3";
+                v.setSteer("3");
+            }
+            /*计算分流比例*/
+            if(ster==null){
+                System.out.println();
+            }
+            setCanalScale(cal, ster);
+            /*车辆入队*/
+            offerQueue(stc, deque, v, ster);
+
+        }
+    }
+
+
+
+
+GA 算法
+
+ int step=0;
+        /*1、初始化种群*/
+        List<Chromosome> chroms = initPop();
+        List<Chromosome> bestList = new ArrayList<>();
+        while(step<MaxGen){
+            /*2、计算适应度*/
+            updateAdaptive(chroms);
+            /*3、选择*/
+            List<Chromosome> newPopulation =  operateOfSelect(chroms);
+            /*4、交叉*/
+            operateOfCrossover(newPopulation);
+            /*5、变异*/
+            //operateOfMutation(newPopulation);
+            mutation(newPopulation);
+            chroms = newPopulation;
+            bestList.add(SA_CGA.adaptivest(newPopulation));
+            step++;
+            //System.out.println("step = " +step);
+            double sum = 0.0;
+            for(int i=0; i<PopSize; i++){
+                double fx = chroms.get(i).getFitness();
+                sum+=fx;
+                //System.out.print("自变量："+SA_CGA.deCode(0,10,chroms.get(i).getGene())+" ");
+                //System.out.print("基因："+ Arrays.toString(chroms.get(i).getGene())+" ");
+                //System.out.println("函数值："+chroms.get(i).getFitness());
+            }
+            System.out.println(sum/PopSize);
+        }
+        System.out.println("---------------结果---------------");
+        Chromosome P = SA_CGA.adaptivest(chroms);
+        System.out.print("自变量："+SA_CGA.deCode(0,10,P.getGene())+" ");
+        System.out.println("函数值："+P.getFitness());
+
+
+
+
+
+
+
+
+
+                                            /*##############################################*/
+            /*########################################### 3D-cGA 算法测试 ########################################################*/
+            @Test()
+            public void TD_CGA() throws IOException,Exception {
+                int sample = 10;
+                int cx = 0;
+                double[] f = new double[MaxGen];
+                double[][] x = new double[PopSize*PopSize*PopSize][4];
+                double[][] x1 = new double[PopSize*PopSize*PopSize][4];
+                double[][] x2 = new double[PopSize*PopSize*PopSize][4];
+                double[][] x3 = new double[PopSize*PopSize*PopSize][4];
+                while (cx<sample){
+                    int step = 0;
+                    CellChrome[][][] chroms = TD_CGA.initPop();
+                    int t=0,t1=0,t2=0,t3=0;
+                    while(step<MaxGen){
+                        /*2、计算适应度*/
+                        TD_CGA.updateAdaptive(chroms);
+                        /*3、选择*/
+                        TD_CGA.select(chroms);
+                        /*4、交叉*/
+                        TD_CGA.crossover(chroms);
+                        /*5、变异*/
+                        TD_CGA.mutation(chroms);
+                        step++;
+                        double sum = 0.0;
+                        for (int i = 1; i < chroms[0].length-1; i++) {
+                            for (int j = 1; j < chroms[i].length - 1; j++) {
+                                for (int k = 1; k < chroms[j].length - 1; k++) {
+                                    CellChrome c = chroms[i][j][k];
+                                    double fx = GAUtil.func(c.getX1(),c.getX2());
+                                    String[] strs =  c.getId().split("_");
+                                   /* if(fx>0.9903){
+                                        System.out.println(cx+" "+ c.getId() + " "+fx);
+                                    }*/
+                                    if(step==60){
+                                            x[t][0] = Double.parseDouble(strs[0]);
+                                            x[t][1] = Double.parseDouble(strs[1]);
+                                            x[t][2] = Double.parseDouble(strs[2]);
+                                            x[t][3] = fx;
+                                        if(fx>0.9903){
+                                            System.out.println(step+" "+ x[t][0] +" "+ x[t][1]+" "+ x[t][2] + " "+fx);
+                                            cx=10;
+                                        }
+                                        t++;
+                                    }
+                                   /* if(step==20){
+                                        x1[t1][0] = Double.parseDouble(strs[0]);
+                                        x1[t1][1] = Double.parseDouble(strs[1]);
+                                        x1[t1][2] = Double.parseDouble(strs[2]);
+                                        x1[t1][3] = fx;
+                                        if(fx>0.9903){
+                                            System.out.println(cx+" "+ x1[t1][0] +" "+ x1[t1][1]+" "+ x1[t1][2] + " "+fx);
+                                        }
+                                        t1++;
+                                    }
+                                    if(step==40){
+                                        x2[t2][0] = Double.parseDouble(strs[0]);
+                                        x2[t2][1] = Double.parseDouble(strs[1]);
+                                        x2[t2][2] = Double.parseDouble(strs[2]);
+                                        x2[t2][3] = fx;
+                                        if(fx>0.9903){
+                                            System.out.println(cx+" "+ x2[t2][0] +" "+ x2[t2][1]+" "+ x2[t2][2] + " "+fx);
+                                        }
+                                        t2++;
+                                    }
+                                    if(step==50){
+                                        x3[t3][0] = Double.parseDouble(strs[0]);
+                                        x3[t3][1] = Double.parseDouble(strs[1]);
+                                        x3[t3][2] = Double.parseDouble(strs[2]);
+                                        x3[t3][3] = fx;
+                                        if(fx>0.9903){
+                                            System.out.println(cx+" "+ x3[t3][0] +" "+ x3[t3][1]+" "+ x3[t3][2] + " "+fx);
+
+                                        }
+                                        t3++;
+                                    }*/
+                                    sum+=fx;
+                                }
+                            }
+                        }
+                        f[step-1] += sum;
+                    }
+                    fileutils.writeToTxtBypath("D:\\ga.txt",x);
+                    fileutils.writeToTxtBypath("D:\\ga1.txt",x1);
+                    fileutils.writeToTxtBypath("D:\\ga2.txt",x2);
+                    fileutils.writeToTxtBypath("D:\\ga3.txt",x3);
+                    cx++;
+                }
+
+                /*计算种群函数平均值*/
+                for (int i = 0; i < f.length; i++) {
+                     System.out.println(f[i]/(sample*PopSize*PopSize*PopSize));
+                }
+
+            }
